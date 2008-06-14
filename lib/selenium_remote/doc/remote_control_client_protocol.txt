@@ -1,0 +1,334 @@
+View Source
+h1. Abstract
+
+Selenium Remote Control Client Driver Protocol (SRC-CDP) is a lightweight HTTP-based protocol for Selenium Client Drivers to send commands to a Selenium Server, who will perform the commands on the Client Driver's behalf and respond with the result of the command in plain text.
+
+h1. Status of this Document
+
+This document is currently just a working draft, having no formal force. At the time of this writing (2006/03/27) the code in the unreleased Selenium RC trunk appears to support these specifications.
+
+h2. 1. Introduction
+
+This document describes the communication protocol between Selenium Remote Control Client Drivers and the Selenium Remote Control Server. It is our intention for Client Drivers to be implemented in many different languages and development environments; to this end, the Client Driver is designed to be very easy to re-implement, requiring only the ability to perform simple HTTP requests. This document describes the contract that Client Drivers will have with the Server, and defines the scope of the task for a Client Driver implementor.
+
+This document defines most of its terms, and relies on the existing HTML, URL, and HTTP specifications to do most of the heavy lifting. There are two main content sections: Section 5.1 explicitly defines the format of the HTTP Request that Client Drivers must initiate; Section 5.2 defines the format of the HTTP Response that Client Drivers must handle (and parse).
+
+h2. 2. Terminology
+
+Definitions of terms and acronyms given by reference to another document.
+
+HTML form data set - An HTML form data set\[[1|#footnote1]\] is a sequence of name/value pairs, normally URL-encoded\[[2|#footnote2]\] and appended to an URL or encoded in the "application/x-www-form-urlencoded" encoding type and embedded in an HTTP POST request. Once encoded, HTML form data typically looks like this: "name1=value1&name2=value2&name3=value3".
+
+h2. 3. Definitions
+
+Selenium RC - Selenium Remote Control.
+
+Client Driver - A program that intends to send commands to the browser. Normally the Client Driver is an automated test. The Client Driver is normally not a web browser. Normally a Client Driver relies on a Server to transmit commands to the browser.
+
+Client - A Client Driver. The term "Client" by itself is discouraged, because it is easily confused with the browser.
+
+Driver - A Client Driver. The term "Driver" by itself is discouraged, because it is easily confused with the Client and the Server considered as a single unit.
+
+Server - A program designed to accept HTTP requests from Client Drivers and respond with the results of those commands.
+
+Selenium Core - The product that defines the core HTML/JS standard for Selenium. It defines all Selenium Commands that can be performed as well as the communication protocol between the Selenium Server and the Browser.
+
+Selenium Command - An browser-level action that is handled by Selenium Core.
+
+Server Command - A Selenium Command to be handled by the Selenium Server itself, and is not handled by Selenium Core.
+
+Command - A generic term describing either a Selenium Command or the Server Command.
+
+Command Request - A request initiated by the Client Driver to the Server, requesting that the Server perform a Command (possibly by passing it to Selenium Core) and return the result.
+
+Command Response - The Server's response to the Client Driver's Command Request.
+
+HTTP Parameters - Name/value pairs that have been URL encoded in the manner of an HTML form data set. In HTTP GET requests, HTTP Parameters MUST appear in the URL of the request. In HTTP POST requests, HTTP Parameterts MUST be encoded in the body of the HTTP request. (Surprisingly, this standard is not defined in any HTTP or URL RFC, but is only defined in the specifications for HTML \[[1|#footnote1]\].)
+
+Parameters - A short name for HTTP GET Parameters. When used in this way, "Parameters" will always be capitalized.
+
+Browser Session - A testing session associated with a web browser. Commands may be run on a particular Browser Session.
+
+Session ID - A string identifying a Browser Session.
+
+Result Body - The body of the HTTP Command Response.
+
+Accessor - A Command that is designed to return data (one or more strings, numbers, booleans) to the Client Driver. ("Accessor Command" is redundant, but the term may be used for clarity.)
+Accessor Request - A Command Request for an Accessor.
+Accessor Response - A Command Response from an Accessor Command, whose result body will contain the Accessor's returned data.
+
+Action - A Command that is not an Accessor. An Action returns no data.
+Action Request - A Command Request for an Action.
+Action Response - A Command Response from an Action.
+
+h2. 4. Overview
+
+(It may help to review the definitions in the previous section before reading this section.)
+
+Normally, the Selenium Client Driver, Server, and Browser are three separate entities. The Browser is doing the actual automated testing, and is running Selenium Core. We want to send commands directly to the Browser, but since the Browser cannot normally act as a Server with an open port, it instead connects to a Server (using AJAX) to ask it for work to do. The Client initiates simple Command Requests to the Server, which then run Selenium Actions on the Browser by responding to the Browser's AJAX requests.
+
+h3. 4.1 What this document is NOT
+
+This document does not define the protocol by which the Selenium Server communicates with the browser. (This will be documented in a separate Selenium RC RFC.)
+
+This document also does not define the list of valid Selenium Commands. That command set is expected to grow and change with each new version of Selenium Core, and is even user configurable using user extensions. We expect Selenium Core to provide an XML representation of its API, so Client Drivers can be automatically generated from it.
+
+h2. 5. Main Content
+
+
+h3. 5.1 Command Requests
+
+Command Requests MUST begin with the Client Driver initiating an HTTP request to the Selenium Server \[[3|#footnote3]\].
+
+The Server MUST support HTTP GET requests. The Server MAY support HTTP POST requests, but the Client Driver MUST NOT submit POST requests to the Selenium Server until it has issued a "isPostSupported" Command Request (see section 5.3.1). If the result of "isPostSupported" is "false", the Client Driver MUST NOT submit POST requests to the server; if the result of "isPostRequested" is "true", the Client Driver MAY submit POST requests to the server. The Client Driver MAY submit GET requests without issuing the "isPostSupported" Command Request.
+
+Command Requests MUST be submitted to the Server using HTTP Parameters (defined in Section 3). The Parameters in a Command Request MUST be uniquely named; in other words, there MUST NOT be two Parameters with the same name in the encoded data string.
+
+There MUST be exactly one Parameter named "cmd" containing the name of the Selenium Action to run. All Command Request Parameters are case-sensitive; the Parameter MUST NOT be named "CMD" or "Cmd".)
+
+Most Commands take one or more arguments. The first argument to the Command should be encoded as the Parameter named "1", and the second argument should be encoded as the Parameter named "2". As of the time of this writing, only two arguments are supported for Commands in Selenium Core, but the Server MUST handle Commands that are not supported by Selenium Core. In the event that more arguments are needed, the third argument would be encoded as the named Parameter "3", the fourth argument as "4", and so on.
+
+A Command Request SHOULD NOT contain more arguments than its Command supports. However, the Server MUST honor Command Requests with too many arguments. Extra arguments MUST have no effect on the result of the Command; specifically, the Server MUST NOT cause the Command to Fail simply because the Command Request contains extra arguments. The Server MAY log a warning message in its log, if any, but this warning message MUST NOT appear in the Command Response.
+
+An example Selenium HTTP GET URL might look like this:
+
+[http://localhost:4444/selenium-server/driver/?cmd=close]
+[http://localhost:4444/selenium-server/driver/?cmd=open&1=http%3A%2F%2Fgoogle.com]
+[http://localhost:4444/selenium-server/driver/?cmd=type&1=q&2=hello+world]
+
+h4. 5.1.1 Browser Sessions
+
+A Client Driver MAY add an additional HTTP Parameter named "sessionId" to the Command Request, indicating that the Command will be run on a particular Browser Session (defined in Section 3), given by its Session ID.
+
+The Server SHOULD maintain a list of valid Session IDs. If the Server maintains a list of valid Session IDs and a Command Request uses a Session ID which is invalid, the Server MUST return an error message in the Command Response body. (See the next section for details).
+
+Client Drivers SHOULD perform the "getNewBrowserSession" Command (see Section 5.3.3) to get a Session ID; the Client Driver MUST NOT use a Session ID with the "getNewBrowserSession" Command.
+
+For example, the Client Driver might initially issue the Command Request:
+
+[http://localhost:4444/selenium-server/driver/?cmd=getNewBrowserSession&1=*firefox&2=http%3A%2F%2Fgoogle.com]
+
+The result body of the response might be "OK,1143493051100". In this case, "1143493051100" is the Session ID string. The Client Driver might then issue the Command Request:
+
+[http://localhost:4444/selenium-server/driver/?cmd=open&1=http%3A%2F%2Fgoogle.com&sessionId=1143493051100]
+
+The result body of the response might be "OK". Finally, the Client Driver might issue the Command Request:
+
+[http://localhost:4444/selenium-server/driver/?cmd=testComplete]
+
+The result body of this response might be "OK". At this point, the Client Driver MUST NOT use Session ID "1143493051100" again.
+
+h3. 5.2 Command Response
+
+The Server MUST always respond to a Command Request with HTTP Response Code 200 \[[3|#footnote3]\]; hence any other response code represents an error in the Server.
+
+The Server MUST declare "text/plain" in the Content-Type header of the Command Response, and SHOULD specify a character set explicitly. UTF-8 is RECOMMENDED as a character set, but the Client and Server MAY negotiate any other character set as needed, according to the specifications of HTTP. The negotiated character set MAY be either a single-byte character set or a multi-byte character set. This section will refer to "characters", not to "bytes", because characters and bytes are not necessarily the same thing.
+
+This document does not specify how the Server is supposed to perform the Command. Once the Command has been performed, the result of running the Command MUST appear in the Result Body of the Command Response.
+
+h4. 5.2.1 Accessor Responses
+
+Some Commands are Accessors, meaning that they are designed to return information (one or more strings, numbers, booleans) to the Client Driver. If the Command Request specified an Accessor in the "cmd" Parameter, then the Command Request is an Accessor Request, in which case the Result Body of the Command Response (the Accessor Response) MUST contain data that the Accessor was supposed to retrieve, or an error message.
+
+If the Accessor was able to retrieve the requested data, the Accessor Succeeded. If the Accessor was not able to retrieve the requested data for any reason, the Accessor Failed. For example, if the Client Driver requests the text of an element that does not exist, the Accessor SHALL Fail. Therefore the Accessor MUST either Succeed or Fail. (This document does not define a Null response or a Not Applicable response.)
+
+If the Accessor Succeeded, the Result Body MUST begin with the three characters "OK,". After these three characters, the Accessor's resulting information should appear.
+
+h5. 5.2.1.1 String Accessor Responses
+
+If the Accessor returns a simple string, that string MUST appear in the result body immediately after the characters "OK,". For example, if the Accessor returned the string "foo", the entire Result Body MUST be "OK,foo" (not including quotes).
+
+Accessors MAY retrieve an empty string (0 characters of data), in which case the entire Result Body will be "OK,". (For example, if the Client Driver requested the text of an attribute that was present but empty, the Accessor may return 0 characters of data.) If the Accessor Failed, the Result Body MUST NOT begin with "OK" and MUST contain an error message.
+
+h5. 5.2.1.2 String Array Accessor Responses
+
+If the Accessor returns more than one string (an array of strings), then the Result Body MUST contain all of the strings delimited by the comma (",") character. If any of the strings themselves contain a comma or a backslash ("\") character, these characters MUST be escaped in the Result Body by adding a backslash character before each character. For example, if the 3 strings to be returned are (not including trailing whitespace and new lines):
+
+{noformat}
+veni, vidi, vici
+c:\foo\bar
+c:\I came, I \saw\, I conquered
+{noformat}
+
+Then the entire Result Body MUST be:
+
+{noformat}
+OK,veni\, vidi\, vici,c:\\foo\\bar,c:\\I came\, I \\saw\\\, I conquered
+{noformat}
+
+The following non-normative example Java code is given as a parser for these comma-delimited strings. (Note that the backslash-escaped comma-delimited format can be non-trivial to implement in a single regex.)
+{code}
+ArrayList output = new ArrayList();
+StringBuffer sb = new StringBuffer();
+for(int i = 0; i < input.length(); i++) {
+char c = input.charAt(i);
+switch (c) {
+case ',':
+output.add(sb.toString());
+sb = new StringBuffer();
+continue;
+case '\\':
+i++;
+c = input.charAt(i);
+// fall through to:
+default:
+sb.append(c);
+}
+}
+output.add(sb.toString());
+return (String[]) output.toArray(new String[0]);
+{code}
+In a String Array Accessor Response, the backslash character SHOULD only appear immediately before another backslash or a comma. If the String Array Accessor Response includes a backslash character immediately before some other character, the Client Driver MUST ignore that backslash character.
+
+h5. 5.2.1.3 Number Accessor Responses
+
+If the Accessor returns a number, then it MUST be "JavaScript encoded" as a string, and SHALL appear in the Accessor Response in its string-encoded form.
+
+"JavaScript encoding" a number is simply the result of running "String(x)" in JavaScript for some number variable x. A formal syntax for JavaScript number strings is given at [http://json.org].
+
+If the Accessor returns an array of numbers, then each MUST be JavaScript encoded as a string and SHALL appear in the Accesor Response as an array of strings.
+
+h5. 5.2.1.4 Boolean Accessor Responses
+
+If the Accessor returns the boolean True, then it MUST be encoded as the string "true". If the Accessor returns the boolean False, then it MUST be encoded as the string "false".
+
+If the Accessor returns an array of booleans, then each MUST be encoded as a string and SHALL appear in the Accesor Response as an array of strings.
+
+h4. 5.2.2 Action Responses
+
+If the Command was not an Accessor, it was an Action, which returns no data. In this case, Success and Failure are defined by Selenium Core. If the Action Succeeded, the entire body of the Command Response MUST be "OK". If the Action Failed the Command Response MUST NOT start with "OK", and MUST contain an error message.
+
+h4. 5.2.3 Whitespace
+
+The Server MUST NOT add any additional whitespace characters to the Result Body. For example, if the Command was an Action and Succeeded, the last character of the Result Body MUST be "K".
+
+h3. 5.3 Server Commands
+
+The commands described in this section are unique to the Selenium Server; they are not a part of Selenium Core. Non-normative Selenium API XML documentation snippets are also given, which are suitable for automatic updates.
+
+h4. 5.3.1 isPostSupported()
+
+Selenium Servers MUST handle this Server Command.
+
+Determines whether the Selenium Server accepts HTTP POST requests.
+
+Selenium Server implementations MUST accept HTTP GET requests, with arguments encoded in the URL query string. Selenium Servers MAY accept HTTP POST requests as well, in which arguments are encoded in the body of the HTTP request.
+
+"isPostSupported" is an Accessor that returns a boolean. It returns "true" if the Server accepts HTTP POST requests, "false" otherwise
+{code:xml}
+<function name="isPostSupported">
+<return type="boolean">"true" if the Server accepts HTTP POST requests,
+"false" otherwise.</return>
+<comment>
+Determines whether the Selenium Server accepts HTTP POST requests.
+
+<p>Selenium Server implementations MUST accept HTTP GET requests, with
+arguments encoded in the URL query string. Selenium Servers MAY accept
+HTTP POST requests as well, in which arguments are encoded in the body of
+the HTTP request.</p>
+</comment>
+</function>
+{code}
+
+h4. 5.3.2 shutDown() (OPTIONAL)
+
+Selenium Servers MAY handle this Server Command.
+
+Causes the Server to shut itself down, killing all browsers it started before stopping.
+
+"shutDown" in an Action that returns no data.
+{code:xml}
+<function name="shutDown">
+<comment>
+Causes the Server to shut itself down, killing all browsers it started
+before stopping.
+</comment>
+</function>
+{code}
+
+h4. 5.3.3 getNewBrowserSession() (RECOMMENDED)
+
+Selenium Servers SHOULD handle this Server Command.
+
+Creates a new "sessionId" string (based on the current time in milliseconds) and launches the browser specified in browserString. The Client Driver MUST NOT use a sessionId with this Command.
+
+"browserString" MUST be either an absolute file path to a browser executable, or a special string starting with an asterisk '*'. (See the next section for details.)
+"startURL" MUST be the base URL of the web site to test. If you are testing a web application on [http://mysite.com/foo/bar], "startURL" SHALL be "http://mysite.com"
+
+"getNewBrowserSession" is an Accessor that returns a string. It returns the generated "sessionId" string.
+{code:xml}
+<function name="getNewBrowserSession">
+<param name="browserString">either an absolute file path to a browser
+executable, or a special string starting with an asterisk '*'</param>
+<param name="startURL">the base URL of the web site to test. If you are
+testing a web application on http://mysite.com/foo/bar, "startURL" SHALL be
+"http://mysite.com"</param>
+<return type="string">the generated "sessionId" string.</return>
+<comment>
+Creates a new "sessionId" string (based on the current time in
+milliseconds) and launches the browser specified in browserString. The
+Client Driver MUST NOT use a sessionId with this Command.
+</comment>
+</function>
+{code}
+
+h5. 5.3.3.1 Supported Special Browser Strings (RECOMMENDED)
+
+Supporting the following special browserStrings is RECOMMENDED:
+* \*firefox
+* \*iexplore
+* \*opera
+* \*netscape
+* \*konqueror
+* \*safari
+* \*seamonkey
+* \*omniweb
+* \*camino
+
+The Server MAY support other special browserStrings.
+
+If the Client Driver issues a "getNewBrowserSession" Command Request for one of these strings, the Server SHOULD launch the specified browser.
+
+When the Server launches the browser using a special browserString, the Server MAY automatically configure the browser in a way that makes it suitable for automated testing. For example the Server MAY disable pop-up blocking or unnecessary security prompts.
+
+The Server MAY allow options to be specified in the browserString, by appending them to one of the supported browserStrings. For example, the Server MAY allow the Client Driver to specify an absolute path to Firefox while the Server automatically configures it by accepting the browserString "*firefox c:\firefox\firefox.exe".
+
+h4. 5.3.4 testComplete() (RECOMMENDED)
+
+Selenium Servers SHOULD handle this Server Command.
+
+Declares to the Server that testing with the current sessionId is complete. If this sessionId is associated with a running browser that the Server has started, the Server MUST stop the browser process when handling "testComplete".
+
+"testComplete" in an Action that returns no data.
+{code:xml}
+<function name="testComplete">
+<comment>
+Declares to the Server that testing with the current sessionId is complete.
+If this sessionId is associated with a running browser that the Server has
+started, the Server MUST stop the browser process when handling
+"testComplete".
+</comment>
+</function>
+{code}
+
+h2. 6. Security Considerations
+
+The Selenium Server MAY support HTTP Secure Socket Layer (SSL) to secure communications between the Client and the Server. If SSL is not used, then the Client/Server communications may be intercepted or altered by third parties on the public Internet. Private, confidential or personal information SHOULD be encrypted before being transmitted over the public Internet.
+
+Also note that the Selenium Server's interactions with the Browser may defeat some important security precautions in the browser, but this discussion is out of scope for the current requirements document, which discusses only Client/Server communication, not Browser/Server communication.
+
+h2. 7. References
+
+{anchor:footnote1}\[1\] Raggett, D., et al., "HTML 4.01 Specification", W3C Recommendation, December 1999. <[http://www.w3.org/TR/REC-html40/interact/forms.html#h-17.13.3]>
+
+{anchor:footnote2}\[2\] Berners-Lee, T., Masinter, L. and M. McCahill, "Uniform Resource Locators (URL)", RFC 1738, December 1994.
+
+{anchor:footnote3}\[3\] Gettys, J., Fielding, R., Mogul, J., Frystyk, H., Masinter, L., Leach, P. and T. Berners-Lee, "Hypertext Transfer Protocol -- HTTP/1.1", RFC 2616, June 1999.
+
+h2. 8. Author
+
+Dan Fabulich (dfabulich at warpmail.net) is a Senior Software Engineer at BEA Systems' Business Interaction Division. He has been writing and running multi-platform automated tests in Java and .NET since 2002, and has specialized in developing automated testing tools and infrastructure. He has a B.S. in Biomedical Engineering and Philosophy from Yale University.
+
+Copyright 2006 OpenQA. Distribution of this memo is unlimited.
+Site powered by a free Open Source Project / Non-profit License (more) of Confluence - the Enterprise wiki.
+Learn more or evaluate Confluence for your organisation.

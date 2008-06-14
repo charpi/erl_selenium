@@ -1,0 +1,8 @@
+{application, selenium_remote,
+ [{description, "Selenium server remote control"},
+  {author, "Nicolas Charpentier"},
+  {vsn, %VSN%},
+  {modules, [%MODULES%]},
+  {registered, []},
+  {applications, [kernel, stdlib]}
+ ]}.
