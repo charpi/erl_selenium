@@ -1,0 +1,29 @@
+%% -*- erlang -*-
+main([Script, Path, With_Erts, Erts_dir|Paths]) ->
+    try
+	add_path(Paths),
+	systools:make_tar(Script, options(With_Erts, Path, Erts_dir))
+    catch
+        _:_ ->
+            usage()
+    end;
+main(_) ->
+    usage().
+        
+options ("with", Path, Erts_dir) ->
+    [{path,[Path]},
+     {erts,Erts_dir},
+     {dirs,[]}];
+options (_,Path, _) ->
+    [{path,[Path]},
+     {dirs,[]}].
+
+usage() ->
+    io:format("usage: make_tar <release_name> <path> "with/without" <erts_dir> [<additional_code_path>]\n"),
+    halt(1).
+
+add_path([]) ->
+    ok;
+add_path([X|Tail]) ->
+    code:add_path(X),
+    add_path(Tail).

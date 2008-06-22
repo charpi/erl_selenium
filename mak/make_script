@@ -1,0 +1,23 @@
+%% -*- erlang -*-
+main([Script,Path|Paths]) ->
+    try
+	add_path(Paths),
+	systools:make_script(Script,[{path,[Path]},
+				     {outdir,Path},
+				     exref])
+    catch
+        _:_ ->
+            usage()
+    end;
+main(_) ->
+    usage().
+        
+usage() ->
+    io:format("usage: make_script <release_name> <path> [<additional_code_path>]\n"),
+    halt(1).
+
+add_path([]) ->
+    ok;
+add_path([X|Tail]) ->
+    code:add_path(X),
+    add_path(Tail).
