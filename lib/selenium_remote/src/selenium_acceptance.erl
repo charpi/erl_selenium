@@ -5,9 +5,17 @@
 
 -compile ([export_all]).
 
--define (HOST,"localhost").
+-define (HOST,"192.168.0.5").
 -define (PORT,4444).
--define (COMMAND,"*firefox\ /usr/lib/firefox/firefox-bin").
+-define (COMMAND,"*firefox\ /usr/lib/firefox/firefox-2-bin").
+
+tests () ->
+    start_session_test(),
+    default_server_test(),
+    google_test(),
+    keypress_test(),
+    high_level_test(),
+    ok.
 
 start_session_test () ->
     URL = "http://localhost:4444",
@@ -117,7 +125,7 @@ wait_for_page_to_load () ->
 
 selenium_config () ->
     URL = "http://localhost:4444",
-    BrowserBinary = "/usr/lib/firefox/firefox-bin",
+    BrowserBinary = "/usr/lib/firefox/firefox-2-bin",
     [{server, {?HOST, ?PORT}},
      {browser, {"*firefox", BrowserBinary}},
      {url, URL}].

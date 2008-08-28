@@ -28,7 +28,7 @@ run_test : all
 	$(ERLDIR)/bin/escript ./mak/make_test .
 
 binary_backup: all
-	tar -C .. -czvf ../../../trest-$(VSN).tgz .
+	tar -C .. -czvf ../../../test-$(VSN).tgz .
 
 APPSCRIPT = '$$vsn=shift; $$mods=""; while(@ARGV){ $$_=shift; s/^([A-Z].*)$$/\'\''$$1\'\''/; $$mods.=", " if $$mods; $$mods .= $$_; } while(<>) { s/%VSN%/$$vsn/; s/%MODULES%/$$mods/; print; }'
 

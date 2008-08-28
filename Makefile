@@ -1,11 +1,14 @@
+include vsn.mk 
 LIBS=lib
 
-all test clean binary_backup: 
+all test clean: 
 	@for dir in $(LIBS); do \
 	    (cd $$dir; $(MAKE) $@) \
 	done
 
 source_backup:
-	tar --exclude="*~" --exclude="selenium/selenium_src.tgz" -C .. -czvf selenium_src.tgz selenium
+	today=`date +%Y%M%d` ;\
+	tar --exclude="*/.svn*" --exclude="*~" --exclude="selenium/selenium_src-*.tgz" -C .. -czvf selenium_src-$$today.tgz selenium
+
 
 

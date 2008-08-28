@@ -1,6 +1,6 @@
 LIBS := selenium_remote
 
-all test clean binary_backup: 
+all test clean source_backup: 
 	@for dir in $(LIBS); do \
 	    (cd $$dir; $(MAKE) $@) \
 	done

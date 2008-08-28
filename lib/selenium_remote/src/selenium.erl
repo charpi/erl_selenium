@@ -1,4 +1,4 @@
-%%% Copyright (c) 2007 Nicolas Charpentier
+%%% Copyright (c) 2007,2008 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
 -module (selenium).
@@ -17,7 +17,12 @@ start (Host, Port, Command, URL) ->
     Get_new_browser = {getNewBrowserSession, [Command, URL]},
     RequestUrl = build_request_without_id (Host, Port, Get_new_browser),
     {ok, Result} = send_request (RequestUrl),
-    {Host, Port, Result}.
+    {Host, Port, normalize_session_id (Result)}.
+
+normalize_session_id (SessionId) when is_list(SessionId) ->
+    SessionId;
+normalize_session_id (SessionId) ->
+    integer_to_list(SessionId).
 
 stop (Session) ->
     {ok, Result} = cmd (Session, testComplete, []),
@@ -31,11 +36,11 @@ cmd ({Host, Port, Id}, Command, Params) when is_list (Params) ->
     Result = send_request (Request),
     Result.
 
-run(Config, Commands) when is_list (Config) ->
+run (Config, Commands) when is_list (Config) ->
     Session = launch_session (Config),
-    Excecute = fun (Command) -> run_command(Session, Command) end,
-    Results = lists: map(Excecute, Commands),
-    selenium:stop(Session),
+    Excecute = fun (Command) -> run_command (Session, Command) end,
+    Results = lists: map (Excecute, Commands),
+    selenium: stop (Session),
     Results.
 
 launch_session (Config) ->
@@ -55,12 +60,12 @@ run_command (Session, Command) ->
     Result = selenium: cmd (Session, Key, Params),
     {Command, {not_tested, Result}}.
 
-interpret_result (_, {ok, Result}, Expected) ->
+interpret_result (Command, {ok, Result}, Expected) ->
     case catch Expected (Result) of
-	{'EXIT', {Reason, _Stack}} ->
-	    {test_error, error_message (Reason, Result)};
-	_Good ->
-	    {ok,"OK"}
+        {'EXIT', {Reason, _Stack}} ->
+            {test_error, error_message (Reason, Result)};
+        _Good ->
+            {Command, {ok,"OK"}}
     end;
 interpret_result (Command, X, _) ->
     {Command, {cmd_error, X}}.
@@ -77,52 +82,55 @@ build_request_without_id (Host, Port, Command) when is_integer(Port) ->
 
 build_request (Host, Port, Id, Command) ->
     Base_url = build_request_without_id (Host,Port,Command),
-    Base_url ++ "&sessionId=" ++ integer_to_list (Id).
+    Base_url ++ "&sessionId=" ++ Id.
 
 command_to_string ({Command, Parameters}) when is_atom (Command), 
-					       is_list (Parameters)->
+                                               is_list (Parameters)->
     Build_parameter = fun (X, {Index,Acc}) ->
-			      {Index+1,
-			       Acc ++ "&" ++ integer_to_list (Index)
-				  ++ "=" ++ encode_url_params (X)}
-			 end,
+                              {Index+1,
+                               Acc ++ "&" ++ integer_to_list (Index)
+                               ++ "=" ++ encode_url_params (X)}
+                      end,
     {_, ParamsString} = lists: foldl (Build_parameter, {1,""}, Parameters),
     "cmd="++ atom_to_list (Command) ++ ParamsString.
 
 send_request (RequestUrl) ->
+    application:start(inets),
     {ok, {{_,200,_}, _, Body}} = http: request (RequestUrl),
     parse_body(Body).
 
 parse_body ("OK") ->
     {ok, none};
 parse_body ("OK," ++ Rest) ->
-    {ok, parse_body_content (Rest)};
+    {ok, parse_body_value (Rest)};
 parse_body (X) ->
     {failed, X}.
 
-parse_body_content ([H|_] = Body) when H >= $1, H =< $9 ->
-    parse_integer (Body);
-parse_body_content ([H,Second |_] = Body) when H == $- , 
-Second >= $1, 
-Second=< $9 ->
-    parse_integer (Body);
-parse_body_content ([H,Second |_] = Body) when H == $0 , Second == $. ->
-    parse_float (Body);
-parse_body_content (Rest) ->
-    parse_string (Rest).
 
-parse_integer (Rest) ->
-    parse_integer (Rest,[]).
+parse_body_value ([$-|T]) ->
+    parse_number (T, [$-],number);
+parse_body_value ([H|T]) when H >= $0 , H =<$9 ->
+    parse_number (T, [H],number);
+parse_body_value (H)->
+    parse_string(H).
 
-parse_integer ([], Acc) ->
-    list_to_integer (lists: reverse (Acc));
-parse_integer ([$.|Rest], Acc) ->
-    parse_float (lists: reverse (Acc) ++ [$.|Rest]);
-parse_integer ([H|Rest],Acc) ->
-    parse_integer (Rest,[H|Acc]).
+    
 
-parse_float (Rest) ->
-    list_to_float (Rest).
+parse_number([],Acc,Type) ->
+    case Type of 
+	float ->
+	    list_to_float(lists:reverse(Acc));
+	_ ->
+	    list_to_integer(lists:reverse(Acc))
+    end;
+parse_number( [$.|T], Acc, number) ->
+    parse_number(T, [$.|Acc],  float);
+parse_number( [H|T], Acc, number) when H >= $0 , H =<$9 ->
+    parse_number(T, [H|Acc],  number);
+parse_number( [H|T], Acc, float) when H >= $0 , H =<$9 ->
+    parse_number(T, [H|Acc],  float);
+parse_number(Head, Acc, _) ->
+    parse_string(lists:reverse(Acc) ++ Head).
 
 parse_string(String) ->
     parse_string(String,[]).
@@ -146,9 +154,9 @@ accumulate(Value, Acc) ->
 
 reverse_accumulator([H|_]=Acc) when is_list(H) ->
     lists:reverse(lists:map(fun(X) ->
-		      lists:reverse(X)
-	      end,
-	      Acc));
+                                    lists:reverse(X)
+                            end,
+                            Acc));
 reverse_accumulator(Acc) ->
     lists:reverse(Acc).
 
@@ -172,8 +180,8 @@ encode_url_params([X | T], Acc) when X == $-; X == $_; X == $. ->
     encode_url_params(T, [X | Acc]);
 encode_url_params([X | T], Acc) ->
     encode_url_params(T, [$%, 
-			  dec_to_hex(X bsr 4), 
-			  dec_to_hex(X band 16#0f) | Acc]);
+                          dec_to_hex(X bsr 4), 
+                          dec_to_hex(X band 16#0f) | Acc]);
 encode_url_params([], Acc) ->
     Acc.
 
