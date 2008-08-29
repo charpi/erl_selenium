@@ -7,7 +7,7 @@ all test clean:
 	done
 
 source_backup:
-	today=`date +%Y%M%d` ;\
+	today=`date +%Y%m%d` ;\
 	tar --exclude="*/.svn*" --exclude="*~" --exclude="selenium/selenium_src-*.tgz" -C .. -czvf selenium_src-$$today.tgz selenium
 
 
