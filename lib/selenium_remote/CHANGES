@@ -1,3 +1,7 @@
+* 0.1.2
+- Commands are sent with a POST request in order to by-pass the
+limitation on the length of an URI
+- UTF8 support
 * 0.1.1
 ** New features
 - OTP R12 support:

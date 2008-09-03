@@ -5,7 +5,8 @@
 
 -compile ([export_all]).
 
--define (HOST,"192.168.0.5").
+%-define (HOST,"192.168.0.5").
+-define (HOST,"localhost").
 -define (PORT,4444).
 -define (COMMAND,"*firefox\ /usr/lib/firefox/firefox-2-bin").
 
@@ -15,6 +16,8 @@ tests () ->
     google_test(),
     keypress_test(),
     high_level_test(),
+    type_very_long_test(),
+    utf8_test(),
     ok.
 
 start_session_test () ->
@@ -49,7 +52,7 @@ default_server_test () ->
     %%    Head ++ "/selenium-server/tests/html/test_click_page2.html" = selenium:cmd(get_location,Session),
     selenium: cmd (Session, click, ["previousPage"]),
     selenium: cmd (Session, waitForPageToLoad, ["5000"]),
-%%    Head ++ "/selenium-server/tests/html/test_click_page1.html" = selenium:cmd(get_location,Session),
+    %%    Head ++ "/selenium-server/tests/html/test_click_page1.html" = selenium:cmd(get_location,Session),
     selenium: stop (Session),
     ok.
 
@@ -86,6 +89,38 @@ keypress_test () ->
     selenium: cmd (Session, keyPress, [InputId, "13"]),
     receive after 500 -> ok end,
     {ok, "Jane Agnews"} = selenium: cmd (Session, getValue, [InputId]),
+    selenium: stop (Session).
+
+type_very_long_test () ->
+    URL = "http://localhost:4444",
+    Session = selenium: start (?HOST,
+			       ?PORT,
+			       ?COMMAND,
+			       URL),
+    Start_url = "/selenium-server/tests/html/test_rich_text.html",
+    LongText = lists:duplicate (50000, $z), 
+    selenium: cmd (Session, open, [Start_url]),
+    selenium: cmd (Session, type, ["richtext", LongText]),
+    {ok, LongText} = selenium: cmd (Session, getValue, ["richtext"]),
+    selenium: stop (Session).
+
+utf8_test () ->    
+    URL = "http://localhost:4444",
+    Session = selenium: start (?HOST,
+			       ?PORT,
+			       ?COMMAND,
+			       URL),
+    Start_url = "/selenium-server/tests/html/test_editable.html",
+    selenium: cmd (Session, open, [Start_url]),
+    selenium: cmd (Session, waitForPageToLoad, []),
+    Object = "normal_text",
+    String = [85,110,105,99,111,100,101,32479,19968,30721],
+    Test = fun(Text) ->
+		   selenium: cmd (Session, type, [Object, Text]),
+		   {ok, Text} = selenium: cmd (Session, getValue, [Object])
+	   end,
+    Inputs = ["foo", xmerl_ucs: to_utf8 (String)],
+    lists: foreach (Test, Inputs),
     selenium: stop (Session).
 
 high_level_test () ->

@@ -33,23 +33,26 @@ command_with_strange_params () ->
 
 
 build_request_without_id_test () ->
-    Test_fun = fun({Expected, Host, Port, Command}) ->
+    Test_fun = fun({Expected, {Host, Port, Command}}) ->
 		       Result = selenium:build_request_without_id (Host, Port,Command),
 		       assert_commands (Expected,Result)
 	       end,
-    Test_datas = [{url()++"cmd=open&1=http%3A%2F%2Fgoogle.com&2=hello+world",
-		   host(), port(), {open, strange_params()}}],
+    Parameters = {host(), port(), {open, strange_params()}},
+    Body = "cmd=open&1=http%3A%2F%2Fgoogle.com&2=hello+world",
+    Expected_request = {url(),Body},
+    Test_datas = [{Expected_request,Parameters}],
     lists:map (Test_fun, Test_datas).
 
 
 build_request_test () ->
-    Test_fun = fun({Expected, Host, Port, Command}) ->
+    Test_fun = fun({Expected, {Host, Port, Command}}) ->
 		      Result = selenium:build_request(Host, Port, id(), Command),
 		      assert_commands(Expected,Result)
 	      end,
-    lists:map (Test_fun,
-	      [{url()++"cmd=open&1=http%3A%2F%2Fgoogle.com&2=hello+world&sessionId=666",
-		host(), port(), {open, strange_params()}}]).
+    Parameters = {host(), port(), {open, strange_params()}},
+    Body = "cmd=open&1=http%3A%2F%2Fgoogle.com&2=hello+world&sessionId=666",
+    Expected_request = {url(),Body},
+    lists:map (Test_fun, [{Expected_request, Parameters}]).
 
 parse_body_test () ->
     Test = fun({Expected, Input}) ->

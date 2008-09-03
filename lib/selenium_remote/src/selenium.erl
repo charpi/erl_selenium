@@ -14,6 +14,7 @@
 
 
 start (Host, Port, Command, URL) ->
+    application:start(inets),
     Get_new_browser = {getNewBrowserSession, [Command, URL]},
     RequestUrl = build_request_without_id (Host, Port, Get_new_browser),
     {ok, Result} = send_request (RequestUrl),
@@ -74,30 +75,42 @@ error_message (Reason, Result) ->
     String = io_lib: format ("FAILED: ~w:~w", [Reason, Result]),
     lists: flatten (String).
 
-build_request_without_id (Host, Port, Command) when is_integer(Port) ->
-    Command_string = command_to_string (Command),
-    Driver_url = "/selenium-server/driver/?",
-    Port_value = integer_to_list (Port),
-    "http://" ++ Host ++ ":" ++ Port_value ++ Driver_url ++ Command_string.
+
+request_url (Host, Port) ->
+    server_url (Host, Port) ++ "/?".
+
+build_request_without_id (Host, Port, Command)  ->
+    {request_url (Host, Port),command_to_string (Command)}.
 
 build_request (Host, Port, Id, Command) ->
-    Base_url = build_request_without_id (Host,Port,Command),
-    Base_url ++ "&sessionId=" ++ Id.
+    {request_url (Host, Port), command_to_string (Command, Id)}.
+
 
 command_to_string ({Command, Parameters}) when is_atom (Command), 
                                                is_list (Parameters)->
     Build_parameter = fun (X, {Index,Acc}) ->
                               {Index+1,
                                Acc ++ "&" ++ integer_to_list (Index)
-                               ++ "=" ++ encode_url_params (X)}
+                               ++ "=" ++ %%
+			       X}
                       end,
     {_, ParamsString} = lists: foldl (Build_parameter, {1,""}, Parameters),
     "cmd="++ atom_to_list (Command) ++ ParamsString.
 
-send_request (RequestUrl) ->
-    application:start(inets),
-    {ok, {{_,200,_}, _, Body}} = http: request (RequestUrl),
-    parse_body(Body).
+command_to_string (Command, Id) ->
+    command_to_string(Command) ++ "&sessionId=" ++ Id.
+
+server_url (Host, Port) when is_integer(Port) ->
+    Driver_url = "/selenium-server/driver",
+    Port_value = integer_to_list (Port),
+    "http://" ++ Host ++ ":" ++ Port_value ++ Driver_url.
+
+send_request ({Url, Body}) ->
+    Content_type = "application/x-www-form-urlencoded; charset=utf-8",
+    Request = {Url, [], Content_type, Body},
+    Result = http: request (post, Request, [], []),
+    {ok, {{_,200,_}, _, Response}} = Result,
+    parse_body(Response).
 
 parse_body ("OK") ->
     {ok, none};
