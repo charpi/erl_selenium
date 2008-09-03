@@ -1,4 +1,5 @@
 List of all things to do on the remote selenium erlang bindings
 
+- Make a script to make build easier
 - add an acceptance test for unicode char (python/test_i18n.py)
 - exp integer support in the command result.
