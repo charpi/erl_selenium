@@ -1,6 +1,6 @@
-SUB_DIRECTORIES = src priv
+SUB_DIRECTORIES = src priv doc
 
-all release_tar test clean source_backup: 
+%: 
 	@for dir in $(SUB_DIRECTORIES); do \
 	  if ! test  -f $$dir/SKIP ; then \
 	    (cd $$dir; $(MAKE) $@) \

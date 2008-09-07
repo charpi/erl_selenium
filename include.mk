@@ -1,11 +1,10 @@
 ###-*-makefile-*-   ; force emacs to enter makefile-mode
 
-## DESTDIR is handled separately in the individual Makefiles
+ERLDIR=/home/opt/lib/erlang
 
 EMULATOR=beam
 APP=app
 
-ERLDIR=/home/opt/lib/erlang
 ERLBINDIR = $(ERLDIR)/bin
 ERL=$(ERLBINDIR)/erl
 ERLC=$(ERLBINDIR)/erlc
@@ -16,16 +15,16 @@ APP_FILES= $(patsubst %.app.src,../ebin/%.$(APP),$(wildcard *.app.src))
 RELEASE_FILE=$(RELEASES:%=../ebin/%.rel)
 BACKUP_FILES=*~
 
-all : $(EBIN_FILES) $(APP_FILES)
+all: $(EBIN_FILES) $(APP_FILES)
 
 clean:
 	rm -f $(EBIN_FILES) $(APP_FILES)
 
-test: all	
-	$(ERLDIR)/bin/escript ../../../mak/make_test .
+# test: all	
+# 	$(ERLDIR)/bin/escript ../../../mak/make_test .
 
-run_test : all
-	$(ERLDIR)/bin/escript ./mak/make_test .
+# run_test : all
+# 	$(ERLDIR)/bin/escript ./mak/make_test .
 
 binary_backup: all
 	tar -C .. -czvf ../../../test-$(VSN).tgz .

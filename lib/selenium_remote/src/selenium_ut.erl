@@ -56,7 +56,7 @@ build_request_test () ->
 
 parse_body_test () ->
     Test = fun({Expected, Input}) ->
-		   {Input,Expected} = {Input,selenium:parse_body (Input)}
+		   {Input,Expected} = {Input,selenium:parse_body (standard, Input)}
 	   end,
     lists:map (Test,
 	       [{{failed,"toto"},"toto"},
@@ -73,9 +73,15 @@ parse_body_test () ->
 		{{ok,"myString"} ,"OK,myString"},
 		{{ok,"comma, test"} ,"OK,comma\\\, test"}, %% need to
 		%% escape $\ to ensure that it's interpreted.
-		{{ok,["dog","cat"]} ,"OK,dog,cat"}
-	      ]),
+		{{ok,"dog,cat"} ,"OK,dog,cat"}
+	       ]),
+
+    {ok, ["dog","cat"]} = selenium:parse_body (array, "OK,dog,cat"),
+    {ok, ["comma, test"," other line"]} = selenium:parse_body (array, "OK,comma\\\, test, other line"),
+
     ok.
+
+
 
 id () ->
     "666".

@@ -1,7 +1,15 @@
-* 0.1.2
+* X
 - Commands are sent with a POST request in order to by-pass the
 limitation on the length of an URI
-- UTF8 support
+- UTF8 support.
+- Support for array commands. Use selenium:cmd or selenium:cmd_array
+to handle results as array or not.
+- Add a new module 'selenium_api' which export all available selenium
+commands. This module forward calls to the 'legacy'
+selenium. 'selenium_api' encapsulate the choice of the return type.
+- Add a new module 'selenium_session'. This is a parameterized module
+which have to be instantiate with a session. The helper function which
+returns the module parameterized is selenium:launch_session/4.
 * 0.1.1
 ** New features
 - OTP R12 support:

@@ -5,7 +5,6 @@
 
 -compile ([export_all]).
 
-%-define (HOST,"192.168.0.5").
 -define (HOST,"localhost").
 -define (PORT,4444).
 -define (COMMAND,"*firefox\ /usr/lib/firefox/firefox-2-bin").
@@ -16,8 +15,9 @@ tests () ->
     google_test(),
     keypress_test(),
     high_level_test(),
-    type_very_long_test(),
+    type_very_long_text_test(),
     utf8_test(),
+    i18n_test(),
     ok.
 
 start_session_test () ->
@@ -41,9 +41,9 @@ default_server_test () ->
     Start_url = "/selenium-server/tests/html/test_click_page1.html",
     selenium:cmd (Session, open, [Start_url]),
     {ok, "Click here for next page" ++ _Rest} = selenium: cmd (Session, getText,
-    ["link"]),
+							       ["link"]),
     
-    {ok, StringLinks} = selenium: cmd (Session, getAllLinks),
+    {ok, StringLinks} = selenium: cmd_array (Session, getAllLinks),
     true = length (StringLinks) > 3,
     "linkToAnchorOnThisPage" = lists: nth (4, StringLinks),
     
@@ -91,7 +91,7 @@ keypress_test () ->
     {ok, "Jane Agnews"} = selenium: cmd (Session, getValue, [InputId]),
     selenium: stop (Session).
 
-type_very_long_test () ->
+type_very_long_text_test () ->
     URL = "http://localhost:4444",
     Session = selenium: start (?HOST,
 			       ?PORT,
@@ -123,14 +123,40 @@ utf8_test () ->
     lists: foreach (Test, Inputs),
     selenium: stop (Session).
 
+i18n_test () ->
+    URL = "http://localhost:4444",
+    Start_url = "/selenium-server/tests/html/test_i18n.html",
+    Session = selenium: start (?HOST,
+				?PORT,
+				?COMMAND,
+				URL),
+    selenium: cmd (Session, open, [Start_url]),
+    Datas = [
+	     {"romance", [252,246,228,220,214,196,32,231,232,233,32,191,241,32,232,224,249,242]},
+	     {"korean", [50676,50640]},
+	     {"chinese", [20013,25991]},
+	     {"japanese", [12414,12407]},
+	     {"dangerous", "&%?\\+|,%*"}],
+    
+    
+    Test = fun({Id,Data}) ->
+		   UTF8 = xmerl_ucs:to_utf8(Data),
+		   Result = selenium: cmd (Session, isTextPresent, [UTF8]),
+		   {ok, "true"} = Result,
+		   {ok, UTF8} = selenium: cmd(Session, getText, [Id])
+	   end,
+    lists:foreach(Test, Datas),
+    selenium: stop (Session).
+
+
 high_level_test () ->
     Config = selenium_config (),
     Commands = commands (),
     Results = selenium: run (Config, Commands),
-    [{{open, ["/selenium-server/tests/html/test_click_page1.html"]},
-      {not_tested, {ok, none}}},
+    URL = "/selenium-server/tests/html/test_click_page1.html",
+    [{{open, [URL]},{not_tested, {ok, none}}},
      {{getText, ["link"], _}, {ok, "OK"}},
-     {{getAllLinks, [], _}, {ok, "OK"}},
+     {{{array, getAllLinks}, [], _}, {ok, "OK"}},
      {{click, ["link"]}, {not_tested, {ok, none}}},
      {{waitForPageToLoad, ["5000"]}, {not_tested, {ok, none}}}] = Results.
 
@@ -149,7 +175,7 @@ get_text () ->
     {getText, ["link"], fun(X) -> "Click here for next page" ++ _Rest = X end}.
 
 get_all_links () ->
-    {getAllLinks, [], fun(X) -> true = 3 < length(X),
+    {{array, getAllLinks}, [], fun(X) -> true = 3 < length(X),
 				"linkToAnchorOnThisPage" = lists:nth(4,X)
 		      end}.
 click () ->

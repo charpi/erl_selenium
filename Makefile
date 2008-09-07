@@ -1,10 +1,11 @@
 include vsn.mk 
 LIBS=lib
 
-all test clean: 
+all %: 
 	@for dir in $(LIBS); do \
 	    (cd $$dir; $(MAKE) $@) \
 	done
+
 
 source_backup:
 	today=`date +%Y%m%d` ;\

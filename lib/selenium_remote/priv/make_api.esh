@@ -1,0 +1,187 @@
+%% -*-erlang-*-   ; force emacs to enter erlang-mode
+%% Nasty copy/paste from xmerl.hrl as escript include_lib can't handle all macro
+%% definitions
+%% This part of code is under the EPL license
+%% 
+%% namespace record
+-record(xmlNamespace,{
+	  default = [],
+	  nodes = []
+	 }).
+
+-record(xmlElement,{
+	  name,			% atom()
+	  expanded_name = [],	% string() | {URI,Local} | {"xmlns",Local}
+	  nsinfo = [],	        % {Prefix, Local} | []
+	  namespace=#xmlNamespace{},
+	  parents = [],		% [{atom(),integer()}]
+	  pos,			% integer()
+	  attributes = [],	% [#xmlAttribute()]
+	  content = [],
+	  language = "",	% string()
+	  xmlbase="",           % string() XML Base path, for relative URI:s
+	  elementdef=undeclared % atom(), one of [undeclared | prolog | external | element]
+	 }).
+
+-record(xmlAttribute,{
+	  name,		   % atom()
+	  expanded_name=[],% atom() | {string(),atom()}
+	  nsinfo = [],	   % {Prefix, Local} | []
+	  namespace = [],  % inherits the element's namespace
+	  parents = [],	   % [{atom(),integer()}]
+	  pos,		   % integer()
+	  language = [],   % inherits the element's language
+	  value,	   % IOlist() | atom() | integer()
+	  normalized       % atom() one of (true | false)
+	 }).
+
+%% End of the copy/paste
+
+main ([Type, Output_dir, API]) ->
+    try
+ 	Functions = extract_functions (API),
+ 	{File_name, Forms} = functions_to_module (Type, Functions),
+	Result = compile: forms(Forms, [report]),
+	{ok, _, Binary} = Result,
+	Output_file = Output_dir ++ "/" ++ File_name,
+ 	{ok, File} = file: open(Output_file, [write,binary]),
+ 	ok = file: write(File, Binary),
+ 	file: close(File)
+    catch Error: Reason ->
+	    Stack = erlang: get_stacktrace(),
+	    Params = [{Error,Reason}, Stack],
+	    io: fwrite("Api generation failed ~p:~p~n",Params)
+    end.
+
+extract_functions (API) ->
+    {Root, []} = xmerl_scan: file(API, []),
+    xmerl_xpath: string("function", Root).
+
+function_information (Function) ->    
+    Name = extract_attribute (name, Function#xmlElement.attributes),
+    Parameters = extract_parameters (xmerl_xpath: string ("param", Function)),
+    Return = extract_return (xmerl_xpath: string ("return", Function)),
+    {Name, Parameters, Return}.
+
+extract_return([]) ->
+    default;
+extract_return([#xmlElement{attributes=Attributes}]) ->
+    Value = extract_attribute (type, Attributes),
+    case hd(lists: reverse (Value)) of
+	$\] -> array;
+	_ -> default
+    end.
+
+extract_parameters (Parameters) ->
+    extract_parameters (Parameters, []).
+
+extract_parameters ([], Acc) ->
+    lists: reverse (Acc);
+extract_parameters ([#xmlElement{attributes=Attributes}|Tail],Acc) ->
+    extract_parameters (Tail, [extract_attribute (name, Attributes)|Acc]).
+
+extract_attribute (Type, []) ->
+    exit ({no_attribute, Type});
+extract_attribute (Type, [#xmlAttribute{name=Type, value=Value}|_]) ->
+    Value;
+extract_attribute (Type, [_|Tail]) ->
+    extract_attribute(Type,Tail).
+
+functions_to_module ("api", Functions) ->
+    Fun = fun(Function) -> function_to_api_form(Function) end,
+    Forms = lists: map (Fun, Functions),
+    {"selenium_api.beam",full_api_forms (Forms)};
+functions_to_module ("session" , Functions) ->
+    Fun = fun(Function) -> function_to_session_form(Function) end,
+    Forms = lists: map (Fun, Functions),
+    {"selenium_session.beam",full_session_forms (Forms)}.
+    
+full_api_forms (Functions) ->
+    Line = 1,
+    Exports = [{attribute, Line, compile, [export_all]}],
+    [{attribute, Line, file, {"./selenium_api.erl", 1}},
+     {attribute, Line, module, selenium_api}] 
+	++ Exports ++ Functions.
+
+full_session_forms (Functions) ->
+    Line = 1,
+    Exports = [{attribute, Line, compile, [export_all]}],
+    Stop = stop_session_form (Line),
+    [{attribute, Line, file, {"./selenium_session.erl", 1}},
+     {attribute, Line, module, {selenium_session, ['Session']}}] 
+	++ Exports ++ Functions ++ Stop.
+
+function_to_api_form (Function) ->
+    Line = 3,
+    {Name, Param, Return} = function_information (Function),
+    Param_as_variable = [{var, Line, list_to_atom (P)} || P <- Param],
+    Name_as_atom = list_to_atom (Name),
+
+    Parameters = [{var, Line, 'Session'}] ++ Param_as_variable,
+
+    Selenium_cmd_call_form = selenium_cmd_call_form (Return,
+						     Name_as_atom,
+						     Param_as_variable),
+						     
+    api_function_form (Name_as_atom, Selenium_cmd_call_form, Parameters).
+
+
+function_to_session_form (Function) ->
+    Line = 3,
+    {Name, Param, Return} = function_information (Function),
+
+    Name_as_atom = list_to_atom (Name),
+    Param_as_variable = [{var, Line, list_to_atom (P)} || P <- Param],
+    
+    Selenium_cmd_call_form = selenium_cmd_call_form (Return,
+						     Name_as_atom,
+						     Param_as_variable),
+    
+    api_function_form (Name_as_atom, Selenium_cmd_call_form, Param_as_variable).
+
+api_function_form (Name_as_atom, Selenium_cmd_call_form, Parameters) ->
+    Line = 3,
+    Clauses = [{clause, Line, Parameters, [], Selenium_cmd_call_form}],
+    {function, Line, Name_as_atom, length (Parameters), Clauses}.
+
+stop_session_form (Line) ->
+    Instructions = [{call, Line,
+		     {remote, Line,
+		      {atom, Line, selenium},
+		      {atom, Line, stop}},
+		     [{var, Line, 'Session'}]
+		    }],
+    Clauses = [{clause, Line, [], [], Instructions}],
+    [{function, Line, stop_session, 0, Clauses}].
+
+put_parameter_in_call (Parameters) ->
+    list_to_tuple (transform_list_to_cons (Parameters)).
+
+transform_list_to_cons ([]) ->
+    [nil, 3];
+transform_list_to_cons ([H|T]) ->
+    [cons, 3, H, put_parameter_in_call (T)].
+
+parameter_list_form ([]) ->
+    [{nil,3}];
+parameter_list_form (Variable_forms) ->
+    [put_parameter_in_call (Variable_forms)].
+
+
+selenium_cmd_call_form (Return, API_function, Variable_forms) ->
+    Line = 3,
+    Selenium_function = return_to_selenium_cmd (Return),
+    Additional_parameters = parameter_list_form (Variable_forms),
+    [{call, Line, {remote,Line,
+		   {atom, Line, selenium},
+		   {atom, Line, Selenium_function}},
+      [{var, Line, 'Session'},
+       {atom, Line, API_function} | 
+       Additional_parameters
+      ]
+     }].
+
+return_to_selenium_cmd (default) ->
+    cmd;
+return_to_selenium_cmd (array) ->
+    cmd_array.
