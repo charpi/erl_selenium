@@ -1,4 +1,4 @@
-* X
+* 20080907
 - Commands are sent with a POST request in order to by-pass the
 limitation on the length of an URI
 - UTF8 support.
