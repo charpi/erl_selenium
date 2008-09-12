@@ -1,3 +1,10 @@
+* X
+** Bug Fix:
+- Remove R12 specific APIs introduced with 20080907
+** Changes:
+- selenium_api and selenium_session now reference selenium command
+with 'erlang style' name
+
 * 20080907
 - Commands are sent with a POST request in order to by-pass the
 limitation on the length of an URI
@@ -10,6 +17,7 @@ selenium. 'selenium_api' encapsulate the choice of the return type.
 - Add a new module 'selenium_session'. This is a parameterized module
 which have to be instantiate with a session. The helper function which
 returns the module parameterized is selenium:launch_session/4.
+
 * 0.1.1
 ** New features
 - OTP R12 support:

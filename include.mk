@@ -18,7 +18,7 @@ BACKUP_FILES=*~
 all: $(EBIN_FILES) $(APP_FILES)
 
 clean:
-	rm -f $(EBIN_FILES) $(APP_FILES)
+	rm -f $(EBIN_FILES) $(APP_FILES) erl_crash.dump
 
 # test: all	
 # 	$(ERLDIR)/bin/escript ../../../mak/make_test .

@@ -1,8 +1,9 @@
-erl_selenium is an erlang implementation of the selenium-rc protocol
+erl_selenium is an erlang implementation of the selenium remote control protocol
 
 
 Selenium is a well known test framework for web interface. Through an
-external api, you are able to run your tests from any languages. In
-particular, with erl_selenium you are now able to run them from erlang. 
+external api, you are able to run your tests from any languages. 
+
+Several client libraries existed but I needed one in erlang ... so I did it.
 
 Project web site: http://trac.charpi.net/charpi.net/wiki/erl_selenium

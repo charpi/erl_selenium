@@ -3,8 +3,10 @@ LIBS=lib
 
 all %: 
 	@for dir in $(LIBS); do \
-	    (cd $$dir; $(MAKE) $@) \
-	done
+	 if ! test  -f $$dir/SKIP ; then \
+	    $(MAKE) -C $$dir $@ || exit 1; \
+	 fi \
+	done;
 
 
 source_backup:

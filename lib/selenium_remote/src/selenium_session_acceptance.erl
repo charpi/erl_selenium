@@ -19,7 +19,6 @@ tests () ->
 %%     high_level_test(),
     ok.
 
-
 default_server_test () ->
     URL = "http://localhost:4444",
     Session = selenium: launch_session (?HOST,
@@ -29,17 +28,17 @@ default_server_test () ->
     Start_url = "/selenium-server/tests/html/test_click_page1.html",
     Session: open (Start_url),
     
-    {ok, "Click here for next page" ++ _Rest} = Session: getText ("link"),
+    {ok, "Click here for next page" ++ _Rest} = Session: get_text ("link"),
     
-    {ok, StringLinks} = Session: getAllLinks (),
+    {ok, StringLinks} = Session: get_all_links (),
     true = length (StringLinks) > 3,
     "linkToAnchorOnThisPage" = lists: nth (4, StringLinks),
     
     Session: click ( "link"),
-    Session: waitForPageToLoad ( "5000"),
+    Session: wait_for_page_to_load ( "5000"),
     %%    Head ++ "/selenium-server/tests/html/test_click_page2.html" = selenium:cmd(get_location,Session),
     Session: click ( "previousPage"),
-    Session: waitForPageToLoad ( "5000"),
+    Session: wait_for_page_to_load ( "5000"),
     %%    Head ++ "/selenium-server/tests/html/test_click_page1.html" = selenium:cmd(get_location,Session),
     Session: stop_session (),
     ok.
@@ -53,8 +52,8 @@ google_test () ->
     Session: open ( "http://www.google.com/webhp"),
     Session: type ( "q", "hello world"),
     Session: click ( "btnG"),
-    Session: waitForPageToLoad ( "5000"),
-    {ok,"hello world - Google Search"} = Session: getTitle (),
+    Session: wait_for_page_to_load ( "5000"),
+    {ok,"hello world - Google Search"} = Session: get_title (),
     Session: stop_session (),
     ok.
 
@@ -68,15 +67,15 @@ keypress_test () ->
 					URL),
     Ajax_url = "http://www.irian.at/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
     Session: open ( Ajax_url),
-    Session: keyPress ( InputId, "74"),
+    Session: key_press ( InputId, "74"),
     receive after 500 -> ok end,
-    Session: keyPress ( InputId, "97"),
-    Session: keyPress ( InputId, "110"),
+    Session: key_press ( InputId, "97"),
+    Session: key_press ( InputId, "110"),
     receive after 500 -> ok end,
-    {ok, "Jane Agnews"} = Session: getText ( UpdateId),
-    Session: keyPress( InputId, "13"),
+    {ok, "Jane Agnews"} = Session: get_text ( UpdateId),
+    Session: key_press( InputId, "13"),
     receive after 500 -> ok end,
-    {ok, "Jane Agnews"} = Session: getValue ( InputId),
+    {ok, "Jane Agnews"} = Session: get_value ( InputId),
     Session: stop_session ().
 
 type_very_long_text_test () ->
@@ -89,7 +88,7 @@ type_very_long_text_test () ->
     LongText = lists:duplicate (50000, $z), 
     Session: open ( Start_url),
     Session: type ( "richtext", LongText),
-    {ok, LongText} = Session: getValue ( "richtext"),
+    {ok, LongText} = Session: get_value ( "richtext"),
     Session: stop_session ().
 
 utf8_test () ->    
@@ -100,12 +99,12 @@ utf8_test () ->
 					URL),
     Start_url = "/selenium-server/tests/html/test_editable.html",
     Session: open ( Start_url),
-    Session: waitForPageToLoad ("5000"),
+    Session: wait_for_page_to_load ("5000"),
     Object = "normal_text",
     String = [85,110,105,99,111,100,101,32479,19968,30721],
     Test = fun(Text) ->
 		   Session: type (Object, Text),
-		   {ok, Text} = Session: getValue (Object)
+		   {ok, Text} = Session: get_value (Object)
 	   end,
     Inputs = ["foo", xmerl_ucs: to_utf8 (String)],
     lists: foreach (Test, Inputs),
@@ -129,9 +128,9 @@ i18n_test () ->
     
     Test = fun({Id,Data}) ->
 		   UTF8 = xmerl_ucs:to_utf8(Data),
-		   Result = Session: isTextPresent ( UTF8),
+		   Result = Session: is_text_present ( UTF8),
 		   {ok, "true"} = Result,
-		   {ok, UTF8} = Session: getText ( Id)
+		   {ok, UTF8} = Session: get_text ( Id)
 	   end,
     lists:foreach(Test, Datas),
     Session: stop_session ().
@@ -146,7 +145,7 @@ i18n_test () ->
 %%      {{getText, ["link"], _}, {ok, "OK"}},
 %%      {{{array, getAllLinks}, [], _}, {ok, "OK"}},
 %%      {{click, ["link"]}, {not_tested, {ok, none}}},
-%%      {{waitForPageToLoad, ["5000"]}, {not_tested, {ok, none}}}] = Results.
+%%      {{wait_for_page_to_load, ["5000"]}, {not_tested, {ok, none}}}] = Results.
 
 
 %% commands () ->
@@ -170,7 +169,7 @@ i18n_test () ->
 %%     {click, ["link"]}.
 
 %% wait_for_page_to_load () ->
-%%     {waitForPageToLoad, ["5000"]}.
+%%     {wait_for_page_to_load, ["5000"]}.
 
 %% selenium_config () ->
 %%     URL = "http://localhost:4444",

@@ -64,7 +64,7 @@ extract_functions (API) ->
 handle_type("doc", Functions, Output_dir) ->
     F = fun (Function) -> 
 		{Name, Param, _, Comments} = function_information (Function),
-		Params_html = [{b,[],[Name]},{br,[],[]},
+		Params_html = [{b,[],[camel_case_to_erlang(Name)]},{br,[],[]},
 			       "Params:",{ul, [], [{li,[],[P]} || P <- Param]}],
 		[{tr,[],[{td,[],Params_html},{td,[{valign,"top"}], [Comments]}]}]
     end,
@@ -162,7 +162,7 @@ function_to_api_form (Function) ->
 						     Name_as_atom,
 						     Param_as_variable),
 						     
-    api_function_form (Name_as_atom, Selenium_cmd_call_form, Parameters).
+    api_function_form (Name, Selenium_cmd_call_form, Parameters).
 
 
 function_to_session_form (Function) ->
@@ -176,12 +176,13 @@ function_to_session_form (Function) ->
 						     Name_as_atom,
 						     Param_as_variable),
     
-    api_function_form (Name_as_atom, Selenium_cmd_call_form, Param_as_variable).
+    api_function_form (Name, Selenium_cmd_call_form, Param_as_variable).
 
-api_function_form (Name_as_atom, Selenium_cmd_call_form, Parameters) ->
+api_function_form (Name, Selenium_cmd_call_form, Parameters) ->
+    Name_as_erlang_atom = camel_case_to_erlang_atom (Name),
     Line = 3,
     Clauses = [{clause, Line, Parameters, [], Selenium_cmd_call_form}],
-    {function, Line, Name_as_atom, length (Parameters), Clauses}.
+    {function, Line, Name_as_erlang_atom, length (Parameters), Clauses}.
 
 stop_session_form (Line) ->
     Instructions = [{call, Line,
@@ -224,3 +225,18 @@ return_to_selenium_cmd (default) ->
     cmd;
 return_to_selenium_cmd (array) ->
     cmd_array.
+
+
+
+camel_case_to_erlang_atom (Name) ->
+    list_to_atom(camel_case_to_erlang (Name, [])).
+
+camel_case_to_erlang (Name) ->
+    camel_case_to_erlang (Name, []).
+
+camel_case_to_erlang ([], Acc) ->
+    lists: reverse (Acc);
+camel_case_to_erlang ([H|Tail], Acc) when H >= $A, H =< $Z ->
+    camel_case_to_erlang (Tail, [H+32,$_|Acc]);
+camel_case_to_erlang ([H|Tail], Acc) ->
+    camel_case_to_erlang (Tail, [H|Acc]).

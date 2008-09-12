@@ -44,7 +44,6 @@ result_as_array (Result) ->
 result_as_standard (Result) ->
     parse_body (standard, Result).
 
-
 cmd_array (Session, Command) ->
     cmd_array (Session, Command, []).
 
@@ -162,35 +161,35 @@ parse_body_value (Type, H)->
 
     
 
-parse_number(_, [],Acc,Type) ->
+parse_number (_, [],Acc,Type) ->
     case Type of 
 	float ->
-	    list_to_float(lists:reverse(Acc));
+	    list_to_float (lists: reverse (Acc));
 	_ ->
-	    list_to_integer(lists:reverse(Acc))
+	    list_to_integer (lists: reverse (Acc))
     end;
-parse_number(Type, [$.|T], Acc, number) ->
-    parse_number(Type, T, [$.|Acc],  float);
-parse_number(Type,  [H|T], Acc, number) when H >= $0 , H =<$9 ->
-    parse_number(Type, T, [H|Acc],  number);
-parse_number(Type,  [H|T], Acc, float) when H >= $0 , H =<$9 ->
-    parse_number(Type, T, [H|Acc],  float);
-parse_number(Type, Head, Acc, _) ->
-    parse_string(Type, lists:reverse(Acc) ++ Head).
+parse_number (Type, [$.|T], Acc, number) ->
+    parse_number (Type, T, [$.|Acc],  float);
+parse_number (Type,  [H|T], Acc, number) when H >= $0 , H =<$9 ->
+    parse_number (Type, T, [H|Acc],  number);
+parse_number (Type,  [H|T], Acc, float) when H >= $0 , H =<$9 ->
+    parse_number (Type, T, [H|Acc],  float);
+parse_number (Type, Head, Acc, _) ->
+    parse_string (Type, lists: reverse (Acc) ++ Head).
 
-parse_string(Type, String) ->
-    parse_string(Type,String,[]).
+parse_string (Type, String) ->
+    parse_string (Type,String,[]).
 
-parse_string(Type, [], Acc) ->
-    reverse_accumulator(Type, Acc);
-parse_string(Type, [$,|Rest],Acc) ->
-    parse_string(Type, Rest,[[]|transform_accumulator(Acc)]);
-parse_string(Type, [$\\,$\\|Rest],Acc) ->
-    parse_string(Type, Rest,accumulate($\\,Acc));
-parse_string(Type, [$\\,$,|Rest],Acc) ->
-    parse_string(Type, Rest,accumulate($,,Acc));
-parse_string(Type, [H|Rest],Acc) ->
-    parse_string(Type, Rest,accumulate(H,Acc)).
+parse_string (Type, [], Acc) ->
+    reverse_accumulator (Type, Acc);
+parse_string (Type, [$,|Rest],Acc) ->
+    parse_string (Type, Rest,[[]|transform_accumulator(Acc)]);
+parse_string (Type, [$\\,$\\|Rest],Acc) ->
+    parse_string (Type, Rest,accumulate($\\,Acc));
+parse_string (Type, [$\\,$,|Rest],Acc) ->
+    parse_string (Type, Rest,accumulate($,,Acc));
+parse_string (Type, [H|Rest],Acc) ->
+    parse_string (Type, Rest,accumulate(H,Acc)).
 
 accumulate(Value,[H|T]) when is_list(H) -> 
     [[Value|H]|T];
@@ -207,7 +206,7 @@ reverse_accumulator(standard, [H|_]=Acc) when is_list(H) ->
                                     lists:reverse(X)
                             end,
                             Acc)),
-    string:join(Values,",");
+    string_join (Values,",");
 reverse_accumulator(_Type, Acc) ->
     lists:reverse(Acc).
 
@@ -238,3 +237,13 @@ encode_url_params([], Acc) ->
 
 dec_to_hex(N) when N<10 -> N+$0;
 dec_to_hex(N) -> N+$A-10.
+
+string_join (List, Sep) ->
+    string_join (List, Sep, []).
+
+string_join ([H], _, Acc) ->
+    lists: flatten (lists: reverse ([H|Acc]));
+string_join ([H|Tail], Sep, Acc) ->
+    string_join (Tail, Sep, [Sep, H|Acc]).
+
+				
