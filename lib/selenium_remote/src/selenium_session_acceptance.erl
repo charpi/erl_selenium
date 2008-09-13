@@ -16,7 +16,6 @@ tests () ->
     type_very_long_text_test(),
     utf8_test(),
     i18n_test(),
-%%     high_level_test(),
     ok.
 
 default_server_test () ->
@@ -36,10 +35,8 @@ default_server_test () ->
     
     Session: click ( "link"),
     Session: wait_for_page_to_load ( "5000"),
-    %%    Head ++ "/selenium-server/tests/html/test_click_page2.html" = selenium:cmd(get_location,Session),
     Session: click ( "previousPage"),
     Session: wait_for_page_to_load ( "5000"),
-    %%    Head ++ "/selenium-server/tests/html/test_click_page1.html" = selenium:cmd(get_location,Session),
     Session: stop_session (),
     ok.
 
@@ -80,12 +77,12 @@ keypress_test () ->
 
 type_very_long_text_test () ->
     URL = "http://localhost:4444",
+    LongText = lists:duplicate (50000, $z), 
     Session = selenium: launch_session (?HOST,
 					?PORT,
 					?COMMAND,
 					URL),
     Start_url = "/selenium-server/tests/html/test_rich_text.html",
-    LongText = lists:duplicate (50000, $z), 
     Session: open ( Start_url),
     Session: type ( "richtext", LongText),
     {ok, LongText} = Session: get_value ( "richtext"),
@@ -134,47 +131,3 @@ i18n_test () ->
 	   end,
     lists:foreach(Test, Datas),
     Session: stop_session ().
-
-
-%% high_level_test () ->
-%%     Config = selenium_config (),
-%%     Commands = commands (),
-%%     Results = selenium: run (Config, Commands),
-%%     URL = "/selenium-server/tests/html/test_click_page1.html",
-%%     [{{open, [URL]},{not_tested, {ok, none}}},
-%%      {{getText, ["link"], _}, {ok, "OK"}},
-%%      {{{array, getAllLinks}, [], _}, {ok, "OK"}},
-%%      {{click, ["link"]}, {not_tested, {ok, none}}},
-%%      {{wait_for_page_to_load, ["5000"]}, {not_tested, {ok, none}}}] = Results.
-
-
-%% commands () ->
-%%     [open (),
-%%      get_text (),
-%%      get_all_links (),
-%%      click (),
-%%      wait_for_page_to_load ()].
-
-%% open () ->
-%%     {open, ["/selenium-server/tests/html/test_click_page1.html"]}.
-
-%% get_text () ->
-%%     {getText, ["link"], fun(X) -> "Click here for next page" ++ _Rest = X end}.
-
-%% get_all_links () ->
-%%     {{array, getAllLinks}, [], fun(X) -> true = 3 < length(X),
-%% 				"linkToAnchorOnThisPage" = lists:nth(4,X)
-%% 		      end}.
-%% click () ->
-%%     {click, ["link"]}.
-
-%% wait_for_page_to_load () ->
-%%     {wait_for_page_to_load, ["5000"]}.
-
-%% selenium_config () ->
-%%     URL = "http://localhost:4444",
-%%     BrowserBinary = "/usr/lib/firefox/firefox-2-bin",
-%%     [{server, {?HOST, ?PORT}},
-%%      {browser, {"*firefox", BrowserBinary}},
-%%      {url, URL}].
-    
