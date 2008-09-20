@@ -1,10 +1,12 @@
+* XXX
+** Internal
+- Change selenium_api and selenium_session build
 * 20080913
 ** Bug Fix:
 - Remove R12 specific APIs introduced with 20080907
 ** Changes:
 - selenium_api and selenium_session now reference selenium command
 with 'erlang style' name. Compatibility with 20080907 broken
-
 * 20080907
 - Commands are sent with a POST request in order to by-pass the
 limitation on the length of an URI
