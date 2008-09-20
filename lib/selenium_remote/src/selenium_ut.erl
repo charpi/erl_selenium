@@ -1,9 +1,11 @@
 %%% Copyright (c) 2007,2008 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
--module(selenium_ut).
+-module (selenium_ut).
 
--compile([export_all]).
+-compile ([export_all]).
+-test ([command_to_string_test, build_request_without_id_test,
+	build_request_test, parse_body_test]).
 
 tests () ->
     command_to_string_test (),

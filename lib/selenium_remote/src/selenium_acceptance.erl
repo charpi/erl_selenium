@@ -9,6 +9,9 @@
 -define (PORT,4444).
 -define (COMMAND,"*firefox\ /usr/lib/firefox/firefox-2-bin").
 
+-test ([default_server_test, google_test, keypress_test]).
+-test ([type_very_long_text_test, utf8_test, i18n_test, high_level_test ]).
+
 tests () ->
     start_session_test(),
     default_server_test(),
@@ -38,23 +41,28 @@ default_server_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
-    Start_url = "/selenium-server/tests/html/test_click_page1.html",
-    selenium:cmd (Session, open, [Start_url]),
-    {ok, "Click here for next page" ++ _Rest} = selenium: cmd (Session, getText,
-							       ["link"]),
-    
-    {ok, StringLinks} = selenium: cmd_array (Session, getAllLinks),
-    true = length (StringLinks) > 3,
-    "linkToAnchorOnThisPage" = lists: nth (4, StringLinks),
-    
-    selenium: cmd (Session, click, ["link"]),
-    selenium: cmd (Session, waitForPageToLoad, ["5000"]),
-    %%    Head ++ "/selenium-server/tests/html/test_click_page2.html" = selenium:cmd(get_location,Session),
-    selenium: cmd (Session, click, ["previousPage"]),
-    selenium: cmd (Session, waitForPageToLoad, ["5000"]),
-    %%    Head ++ "/selenium-server/tests/html/test_click_page1.html" = selenium:cmd(get_location,Session),
-    selenium: stop (Session),
-    ok.
+    try 
+	Start_url = "/selenium-server/tests/html/test_click_page1.html",
+	selenium:cmd (Session, open, [Start_url]),
+	{ok, "Click here for next page" ++ _Rest} = selenium: cmd (Session, getText,
+								   ["link"]),
+	
+	{ok, StringLinks} = selenium: cmd_array (Session, getAllLinks),
+	true = length (StringLinks) > 3,
+	"linkToAnchorOnThisPage" = lists: nth (4, StringLinks),
+	
+	selenium: cmd (Session, click, ["link"]),
+	selenium: cmd (Session, waitForPageToLoad, ["5000"]),
+	%%    Head ++ "/selenium-server/tests/html/test_click_page2.html" = selenium:cmd(get_location,Session),
+	selenium: cmd (Session, click, ["previousPage"]),
+	selenium: cmd (Session, waitForPageToLoad, ["5000"])
+	%%    Head ++ "/selenium-server/tests/html/test_click_page1.html" = selenium:cmd(get_location,Session),
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
 
 google_test () ->
     URL = "http://www.google.com/webhp",
@@ -62,13 +70,19 @@ google_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
-    selenium: cmd (Session, open, ["http://www.google.com/webhp"]),
-    selenium: cmd (Session, type, ["q", "hello world"]),
-    selenium: cmd (Session, click, ["btnG"]),
-    selenium: cmd (Session, waitForPageToLoad, ["5000"]),
-    {ok,"hello world - Google Search"} = selenium: cmd (Session, getTitle),
-    selenium: stop (Session),
-    ok.
+    try 
+	selenium: cmd (Session, open, ["http://www.google.com/webhp"]),
+	selenium: cmd (Session, type, ["q", "hello world"]),
+	selenium: cmd (Session, click, ["btnG"]),
+	selenium: cmd (Session, waitForPageToLoad, ["5000"]),
+	{ok,"hello world - Google Search"} = selenium: cmd (Session, getTitle)
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
+
 
 keypress_test () ->
     InputId = "ac4",
@@ -78,18 +92,25 @@ keypress_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
-    Ajax_url = "http://www.irian.at/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
-    selenium: cmd (Session, open, [Ajax_url]),
-    selenium: cmd (Session, keyPress, [InputId, "74"]),
-    receive after 500 -> ok end,
-    selenium: cmd (Session, keyPress, [InputId, "97"]),
-    selenium: cmd (Session, keyPress, [InputId, "110"]),
-    receive after 500 -> ok end,
-    {ok, "Jane Agnews"} = selenium: cmd (Session, getText, [UpdateId]),
-    selenium: cmd (Session, keyPress, [InputId, "13"]),
-    receive after 500 -> ok end,
-    {ok, "Jane Agnews"} = selenium: cmd (Session, getValue, [InputId]),
-    selenium: stop (Session).
+    try
+	Ajax_url = "http://www.irian.at/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
+	selenium: cmd (Session, open, [Ajax_url]),
+	selenium: cmd (Session, keyPress, [InputId, "74"]),
+	receive after 500 -> ok end,
+	selenium: cmd (Session, keyPress, [InputId, "97"]),
+	selenium: cmd (Session, keyPress, [InputId, "110"]),
+	receive after 500 -> ok end,
+	{ok, "Jane Agnews"} = selenium: cmd (Session, getText, [UpdateId]),
+	selenium: cmd (Session, keyPress, [InputId, "13"]),
+	receive after 500 -> ok end,
+	{ok, "Jane Agnews"} = selenium: cmd (Session, getValue, [InputId])
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
+
 
 type_very_long_text_test () ->
     URL = "http://localhost:4444",
@@ -97,12 +118,18 @@ type_very_long_text_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
+    try 
     Start_url = "/selenium-server/tests/html/test_rich_text.html",
     LongText = lists:duplicate (50000, $z), 
     selenium: cmd (Session, open, [Start_url]),
     selenium: cmd (Session, type, ["richtext", LongText]),
-    {ok, LongText} = selenium: cmd (Session, getValue, ["richtext"]),
-    selenium: stop (Session).
+    {ok, LongText} = selenium: cmd (Session, getValue, ["richtext"])
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
 
 utf8_test () ->    
     URL = "http://localhost:4444",
@@ -110,7 +137,8 @@ utf8_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
-    Start_url = "/selenium-server/tests/html/test_editable.html",
+    try 
+	Start_url = "/selenium-server/tests/html/test_editable.html",
     selenium: cmd (Session, open, [Start_url]),
     selenium: cmd (Session, waitForPageToLoad, []),
     Object = "normal_text",
@@ -120,8 +148,13 @@ utf8_test () ->
 		   {ok, Text} = selenium: cmd (Session, getValue, [Object])
 	   end,
     Inputs = ["foo", xmerl_ucs: to_utf8 (String)],
-    lists: foreach (Test, Inputs),
-    selenium: stop (Session).
+    lists: foreach (Test, Inputs)
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
 
 i18n_test () ->
     URL = "http://localhost:4444",
@@ -130,6 +163,7 @@ i18n_test () ->
 				?PORT,
 				?COMMAND,
 				URL),
+    try
     selenium: cmd (Session, open, [Start_url]),
     Datas = [
 	     {"romance", [252,246,228,220,214,196,32,231,232,233,32,191,241,32,232,224,249,242]},
@@ -145,9 +179,13 @@ i18n_test () ->
 		   {ok, "true"} = Result,
 		   {ok, UTF8} = selenium: cmd(Session, getText, [Id])
 	   end,
-    lists:foreach(Test, Datas),
-    selenium: stop (Session).
-
+    lists:foreach(Test, Datas)
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
 
 high_level_test () ->
     Config = selenium_config (),
@@ -190,4 +228,3 @@ selenium_config () ->
     [{server, {?HOST, ?PORT}},
      {browser, {"*firefox", BrowserBinary}},
      {url, URL}].
-    

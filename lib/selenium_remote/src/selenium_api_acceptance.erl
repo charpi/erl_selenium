@@ -9,6 +9,9 @@
 -define (PORT,4444).
 -define (COMMAND,"*firefox\ /usr/lib/firefox/firefox-2-bin").
 
+-test ([default_server_test, google_test, keypress_test]).
+-test ([type_very_long_text_test, utf8_test, i18n_test]).
+
 tests () ->
     default_server_test(),
     google_test(),
@@ -24,6 +27,8 @@ default_server_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
+    try
+
     Start_url = "/selenium-server/tests/html/test_click_page1.html",
     selenium_api:open(Session, Start_url),
 
@@ -36,9 +41,14 @@ default_server_test () ->
     selenium_api: click (Session, "link"),
     selenium_api: wait_for_page_to_load (Session, "5000"),
     selenium_api: click (Session, "previousPage"),
-    selenium_api: wait_for_page_to_load (Session, "5000"),
-    selenium: stop (Session),
-    ok.
+    selenium_api: wait_for_page_to_load (Session, "5000")
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
+
 
 google_test () ->
     URL = "http://www.google.com/webhp",
@@ -46,13 +56,18 @@ google_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
+    try
     selenium_api: open (Session, "http://www.google.com/webhp"),
     selenium_api: type (Session, "q", "hello world"),
     selenium_api: click (Session, "btnG"),
     selenium_api: wait_for_page_to_load (Session, "5000"),
-    {ok,"hello world - Google Search"} = selenium_api: get_title (Session),
-    selenium: stop (Session),
-    ok.
+    {ok,"hello world - Google Search"} = selenium_api: get_title (Session)
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
 
 keypress_test () ->
     InputId = "ac4",
@@ -62,6 +77,7 @@ keypress_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
+    try
     Ajax_url = "http://www.irian.at/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
     selenium_api: open (Session, Ajax_url),
     selenium_api: key_press (Session, InputId, "74"),
@@ -72,8 +88,13 @@ keypress_test () ->
     {ok, "Jane Agnews"} = selenium_api: get_text (Session, UpdateId),
     selenium_api: key_press(Session, InputId, "13"),
     receive after 500 -> ok end,
-    {ok, "Jane Agnews"} = selenium_api: get_value (Session, InputId),
-    selenium: stop (Session).
+    {ok, "Jane Agnews"} = selenium_api: get_value (Session, InputId)
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
 
 type_very_long_text_test () ->
     URL = "http://localhost:4444",
@@ -81,12 +102,18 @@ type_very_long_text_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
+    try
     Start_url = "/selenium-server/tests/html/test_rich_text.html",
     LongText = lists: duplicate (50000, $z), 
     selenium_api: open (Session, Start_url),
     selenium_api: type (Session, "richtext", LongText),
-    {ok, LongText} = selenium_api: get_value (Session, "richtext"),
-    selenium: stop (Session).
+    {ok, LongText} = selenium_api: get_value (Session, "richtext")
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
 
 utf8_test () ->    
     URL = "http://localhost:4444",
@@ -94,6 +121,7 @@ utf8_test () ->
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
+    try
     Start_url = "/selenium-server/tests/html/test_editable.html",
     selenium_api: open (Session, Start_url),
     selenium_api: wait_for_page_to_load(Session, "5000"),
@@ -104,8 +132,13 @@ utf8_test () ->
 		   {ok, Text} = selenium_api: get_value (Session,Object)
 	   end,
     Inputs = ["foo", xmerl_ucs: to_utf8 (String)],
-    lists: foreach (Test, Inputs),
-    selenium: stop (Session).
+    lists: foreach (Test, Inputs)
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.
 
 i18n_test () ->
     URL = "http://localhost:4444",
@@ -114,6 +147,7 @@ i18n_test () ->
 				?PORT,
 				?COMMAND,
 				URL),
+    try
     selenium_api: open (Session, Start_url),
     Datas = [
 	     {"romance", [252,246,228,220,214,196,32,231,232,233,32,191,241,32,232,224,249,242]},
@@ -129,5 +163,10 @@ i18n_test () ->
 		   {ok, "true"} = Result,
 		   {ok, UTF8} = selenium_api: get_text (Session, Id)
 	   end,
-    lists:foreach(Test, Datas),
-    selenium: stop (Session).
+    lists:foreach(Test, Datas)
+    catch E:R ->
+	    exit ({E,R,erlang:get_stacktrace ()})
+    after 
+	selenium: stop (Session),
+	ok
+    end.

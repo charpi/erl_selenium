@@ -9,6 +9,9 @@
 -define (PORT,4444).
 -define (COMMAND,"*firefox\ /usr/lib/firefox/firefox-2-bin").
 
+-test ([default_server_test, google_test, keypress_test]).
+-test ([type_very_long_text_test, utf8_test, i18n_test]).
+
 tests () ->
     default_server_test(),
     google_test(),

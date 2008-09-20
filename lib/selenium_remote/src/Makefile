@@ -6,10 +6,11 @@ EBIN_FILES+= ../ebin/selenium_api.beam ../ebin/selenium_session.beam
 
 all: ../ebin/selenium_api.beam ../ebin/selenium_session.beam 
 
-../ebin/selenium_api.beam: ../priv/iedoc.xml ../priv/make_api.esh
+../ebin/selenium_api.beam: ../priv/iedoc.xml ../ebin/make_api.beam ../priv/make_api.esh
 	$(ERLDIR)/bin/escript ../priv/make_api.esh api ../ebin ../priv/iedoc.xml
 
-../ebin/selenium_session.beam: ../priv/iedoc.xml ../priv/make_api.esh
+
+../ebin/selenium_session.beam: ../priv/iedoc.xml ../priv/make_api.esh ../ebin/make_api.beam 
 	$(ERLDIR)/bin/escript ../priv/make_api.esh session ../ebin ../priv/iedoc.xml
 
 test: all

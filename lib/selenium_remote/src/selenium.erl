@@ -27,7 +27,13 @@ start (Host, Port, Command, URL) ->
 
 launch_session (Host, Port, Command, URL) ->
     S = start (Host, Port, Command, URL),
-    selenium_session: new (S).
+    try 
+	selenium_session: new (S)
+    catch E:R ->
+	    stop (S),
+	    exit ({E,R,erlang:get_stacktrace ()})
+    end.
+
 
 normalize_session_id (SessionId) when is_list(SessionId) ->
     SessionId;
@@ -151,15 +157,12 @@ parse_body (Type, "OK," ++ Rest) ->
 parse_body (_, X) ->
     {failed, X}.
 
-
 parse_body_value (Type, [$-|T]) ->
     parse_number (Type, T, [$-],number);
 parse_body_value (Type, [H|T]) when H >= $0 , H =<$9 ->
     parse_number (Type, T, [H],number);
 parse_body_value (Type, H)->
     parse_string (Type, H).
-
-    
 
 parse_number (_, [],Acc,Type) ->
     case Type of 
@@ -245,5 +248,3 @@ string_join ([H], _, Acc) ->
     lists: flatten (lists: reverse ([H|Acc]));
 string_join ([H|Tail], Sep, Acc) ->
     string_join (Tail, Sep, [Sep, H|Acc]).
-
-				
