@@ -5,7 +5,7 @@ ERLDIR=/home/opt/lib/erlang
 EMULATOR=beam
 APP=app
 
-ERLBINDIR = $(ERLDIR)/bin
+ERLBINDIR =$(ERLDIR)/bin
 ERL=$(ERLBINDIR)/erl
 ERLC=$(ERLBINDIR)/erlc
 
@@ -19,12 +19,6 @@ all: $(EBIN_FILES) $(APP_FILES)
 
 clean:
 	rm -f $(EBIN_FILES) $(APP_FILES) erl_crash.dump
-
-# test: all	
-# 	$(ERLDIR)/bin/escript ../../../mak/make_test .
-
-# run_test : all
-# 	$(ERLDIR)/bin/escript ./mak/make_test .
 
 binary_backup: all
 	tar -C .. -czvf ../../../test-$(VSN).tgz .

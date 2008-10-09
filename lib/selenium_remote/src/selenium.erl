@@ -1,6 +1,10 @@
 %%% Copyright (c) 2007,2008 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
+
+%% @author Nicolas Charpentier <open_source@charpi.net> [http://charpi.net]
+%% @copyright 2007,2008 Nicolas Charpentier
+
 -module (selenium).
 
 -export ([launch_session/4]).
@@ -15,8 +19,13 @@
 -export ([parse_body/2]).
 -export ([command_to_string/1]).
 
+%% @type selenium_session(). An abstract session
+%% @type selenium_command_result(). {ok, none} | {ok, term()} | {failed, term()}.
+%% @type module_instance(). Instance of a parametrized module
 
-
+%% @doc Starts a selenium session which can be used with cmd/3 and cmd_array/3
+%% functions.
+%% @spec start(string(), integer(), string(), string()) -> selenium_session()
 start (Host, Port, Command, URL) ->
     application: start (inets),
     Get_new_browser = {getNewBrowserSession, [Command, URL]},
@@ -25,6 +34,9 @@ start (Host, Port, Command, URL) ->
     {ok, Body} = parse_body(standard, Result),
     {Host, Port, normalize_session_id (Body)}.
 
+%% @doc Returns a module selenium_session which can be used directly.
+%% @spec launch_session(string(),integer(),string(),string()) ->
+%% module_instance()
 launch_session (Host, Port, Command, URL) ->
     S = start (Host, Port, Command, URL),
     try 
@@ -34,47 +46,50 @@ launch_session (Host, Port, Command, URL) ->
 	    exit ({E,R,erlang:get_stacktrace ()})
     end.
 
-
-normalize_session_id (SessionId) when is_list(SessionId) ->
-    SessionId;
-normalize_session_id (SessionId) ->
-    integer_to_list(SessionId).
-
+%% @doc Tells to the selenium server to close the session.
+%% @spec stop(selenium_session()) -> selenium_command_result()
 stop (Session) ->
     {ok, Result} = cmd (Session, testComplete, []),
     Result.
 
-result_as_array (Result) ->
-    parse_body (array, Result).
-
-result_as_standard (Result) ->
-    parse_body (standard, Result).
-
-cmd_array (Session, Command) ->
-    cmd_array (Session, Command, []).
-
-cmd_array ({Host, Port, Id}, Command, Params) ->
-    cmd ({Host, Port, Id}, Command, Params, fun result_as_array/1).
-
+%% @doc Sends a command to the selenium server through a session. The result of
+%% the command is not interpreted as an array
+%% @spec cmd(selenium_session(), string()) -> selenium_command_result()
 cmd (Session, Command) ->
     cmd (Session, Command, []).
 
-cmd ({Host, Port, Id}, Command, Params) ->
-    cmd ({Host, Port, Id}, Command, Params, fun result_as_standard/1).
+%% @doc Sends a command to the selenium server through a session. The result of
+%% the command is not interpreted as an array
+%% @spec cmd(selenium_session(), string(), [string()]) -> selenium_command_result()
+cmd (Session, Command, Params) ->
+    cmd (Session, Command, Params, fun result_as_standard/1).
 
-cmd ({Host, Port, Id}, Command, Params, Fun) when is_list (Params) ->
-    Request = build_request (Host, Port, Id, {Command, Params}),
-    Result = send_request (Request),
-    Fun(Result).
+%% @doc Sends a command to the selenium server through a session. The result of
+%% the command is interpreted as an array
+%% @spec cmd_array(selenium_session(), string()) -> selenium_command_result()
+cmd_array (Session, Command) ->
+    cmd_array (Session, Command, []).
+
+%% @doc Sends a command to the selenium server through a session. The result of
+%% the command is interpreted as an array
+%% @spec cmd_array(selenium_session(), string(), [string()]) -> selenium_command_result()
+cmd_array (Session, Command, Params) ->
+    cmd (Session, Command, Params, fun result_as_array/1).
 
 run (Config, Commands) when is_list (Config) ->
-    Session = launch_session (Config),
+    Session = launch_command_session (Config),
     Excecute = fun (Command) -> run_command (Session, Command) end,
     Results = lists: map (Excecute, Commands),
     selenium: stop (Session),
     Results.
 
-launch_session (Config) ->
+cmd (Session, Command, Params, Fun) when is_list (Params) ->
+    {Host, Port, Id} = Session,
+    Request = build_request (Host, Port, Id, {Command, Params}),
+    Result = send_request (Request),
+    Fun(Result).
+
+launch_command_session (Config) ->
     Config_value = dict: from_list (Config),
     {ok, {Host, Port}} = dict: find (server, Config_value),
     {ok, {Browser, Browser_binary}} = dict: find (browser, Config_value),
@@ -118,13 +133,16 @@ error_message (Reason, Result) ->
 request_url (Host, Port) ->
     server_url (Host, Port) ++ "/?".
 
+%% @private
 build_request_without_id (Host, Port, Command)  ->
     {request_url (Host, Port),command_to_string (Command)}.
 
+%% @private
 build_request (Host, Port, Id, Command) ->
     {request_url (Host, Port), command_to_string (Command, Id)}.
 
 
+%% @private
 command_to_string ({Command, Parameters}) when is_atom (Command), 
                                                is_list (Parameters)->
     Build_parameter = fun (X, {Index,Acc}) ->
@@ -150,6 +168,7 @@ send_request ({Url, Body}) ->
     {ok, {{_,200,_}, _, Response}} = Result,
     Response.
 
+%% @private
 parse_body (_, "OK") ->
     {ok, none};
 parse_body (Type, "OK," ++ Rest) ->
@@ -248,3 +267,15 @@ string_join ([H], _, Acc) ->
     lists: flatten (lists: reverse ([H|Acc]));
 string_join ([H|Tail], Sep, Acc) ->
     string_join (Tail, Sep, [Sep, H|Acc]).
+
+normalize_session_id (SessionId) when is_list(SessionId) ->
+    SessionId;
+normalize_session_id (SessionId) ->
+    integer_to_list(SessionId).
+
+result_as_array (Result) ->
+    parse_body (array, Result).
+
+result_as_standard (Result) ->
+    parse_body (standard, Result).
+

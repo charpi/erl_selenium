@@ -1,0 +1,18 @@
+%% -*- erlang -*-
+main([Application, Path]) ->
+    try
+	Dir = filename:join(filename:join(Path,Application),"ebin"),
+	code:add_path(Dir),
+	edoc: application (list_to_atom (Application))
+    catch
+        E:R ->
+	    io: format ("Error: ~p~n",[{E,R}]),
+            usage()
+    end;
+main(_) ->
+    usage().
+        
+usage() ->
+    io:format("usage: make_doc <application_name> <application_path>\n"),
+    halt(1).
+

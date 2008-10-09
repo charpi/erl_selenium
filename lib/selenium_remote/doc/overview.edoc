@@ -1,0 +1,93 @@
+			-*- html -*-
+
+** Overview file of the erlang selenium remote control library **
+
+@author Nicolas Charpentier <open_source@charpi.net> [http://charpi.net]
+@copyright 2007-2008 Nicolas Charpentier
+@version 20080913
+@title Erlang selenium remote control
+@doc Selenium is a well known web unittest framework. It allows you to test your website behavior with all major browsers.
+
+One interesting add-on to Selenium is a library to access a remotly to a test server. With such library, you can write your tests in your favorite language.
+
+This package is the erlang implementation of the client library which allow you to use erlang as your test framework.
+
+
+
+== Installation ==
+
+If you downloaded the source package, you'll have to build binaries by yourself. To do that you'll need:
+<ul>
+ <li>An erlang OTP distribution</li>
+ <li>make utility</li>
+</ul>
+
+Building steps are:
+<ul>
+<li>Unzip the archive</li>
+<li>Go the directory where you unzip the archive</li>
+<li>Execute the command "make ERLDIR=[path_to_erlang]"</li>
+<li>All modules must be built</li>
+</ul>
+
+
+After that you only have to put the selenium_remote ebin directory in
+your code_path.
+
+== Usage ==
+
+You have 3 different ways to use selenium_remote
+
+=== Basic ===
+
+The basic usage is to use selenium:cmd/3 and selenium:cmd_array/3
+to send commands to the server.
+<br/>
+<code>
+test () ->
+<br/>
+Session = selenium :start (?HOST,?PORT, ?BROWSER, ?URL),
+<br/>
+Start_url = "http://charpi.net",
+<br/>
+selenium: cmd (Session, open, [Start_url]),
+<br/>
+selenium: stop (Session).
+</code>
+
+
+=== Selenium Api ===
+
+A advanced usage is to use the module selenium_api.
+This module is a generated module which export all supported selenium commands.
+Using it, make it easier to detect <it>bad written commands</it>.
+<br/>
+
+<code>
+test () ->
+<br/>
+    Session = selenium :start (?HOST,?PORT, ?BROWSER, ?URL),
+<br/>
+    Start_url = "http://charpi.net",
+<br/>
+    selenium_api: open (Session, Start_url),
+<br/>
+    selenium: stop (Session).
+</code>
+
+=== Selenium Session ===
+
+The ultimate way to use selenium with selunium_remote is to use the
+module selenium_session.
+<br/>
+This module is a generated parametrized module to make code more
+clear.
+<br/>
+
+<code>
+test () ->
+<br/>    Session = selenium :launch_session (?HOST,?PORT, ?BROWSER, ?URL),
+<br/>    Start_url = "http://charpi.net",
+<br/>    Session: open (Start_url),
+<br/>    Session: stop_session ().
+</code>

@@ -1,11 +1,23 @@
 %%% Copyright (c) 2007,2008 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
+
+%% @author Nicolas Charpentier <open_source@charpi.net> [http://charpi.net]
+%% @copyright 2008 Nicolas Charpentier
 -module (selenium_ut).
 
--compile ([export_all]).
 -test ([command_to_string_test, build_request_without_id_test,
 	build_request_test, parse_body_test]).
+
+-export([command_to_string_test /0]).
+-export([simple_command /0]).
+-export([command_with_params /0]).
+-export([command_with_strange_params /0]).
+-export([build_request_without_id_test /0]).
+-export([build_request_test /0]).
+-export([parse_body_test /0]).
+
+-export([tests /0]).
 
 tests () ->
     command_to_string_test (),

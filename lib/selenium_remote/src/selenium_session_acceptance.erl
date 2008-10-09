@@ -1,9 +1,11 @@
 %%% Copyright (c) 2008 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
+
+%% @author Nicolas Charpentier <open_source@charpi.net> [http://charpi.net]
+%% @copyright 2008 Nicolas Charpentier
 -module (selenium_session_acceptance).
 
--compile ([export_all]).
 
 -define (HOST,"localhost").
 -define (PORT,4444).
@@ -11,6 +13,14 @@
 
 -test ([default_server_test, google_test, keypress_test]).
 -test ([type_very_long_text_test, utf8_test, i18n_test]).
+
+-export([tests /0]).
+-export([default_server_test /0]).
+-export([google_test /0]).
+-export([keypress_test /0]).
+-export([type_very_long_text_test /0]).
+-export([utf8_test /0]).
+-export([i18n_test /0]).
 
 tests () ->
     default_server_test(),

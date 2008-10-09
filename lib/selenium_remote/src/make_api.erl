@@ -1,6 +1,14 @@
 %%% Copyright (c) 2008 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
+
+%% @author Nicolas Charpentier <open_source@charpi.net> [http://charpi.net]
+%% @copyright 2008 Nicolas Charpentier
+%% @doc The main purpose of this module is to generate files from the selenium
+%% api xml file.
+%% It can generate either beam files or a documentation.
+%% The beam file corresponds to selenium_api and to selenium_session.
+
 -module (make_api).
 
 -include_lib ("xmerl/include/xmerl.hrl").
@@ -10,18 +18,34 @@
 -export ([api_to_html /1]).
 -export ([html_to_file /3]).
 
+%% @type module_type(). "api" | "session"
+
+%% @doc Returns the binary format of the api file.
+%% The parameter Type can be:
+%% <ul><li>"api" to generate the binary version of selenium_api</li>
+%% <li>"session" to generate the binary version of selenium_session</li></ul>.
+%% The parameter API is the file path to the api xml file.
+%% @spec api_to_binary(module_type(), string()) -> {string(), binary()}
 api_to_binary (Type, API) ->
     Functions = extract_functions (API),
     {File_name, Forms} = functions_to_module (Type, Functions),
     {ok, _, Binary} = compile: forms(Forms, [report]),
     {File_name, Binary}.
 
+%% @doc Write a binary module on disk.
+%% Output_dir is the destination directory.
+%% File_name is the name of the beam file.
+%% Binary is the bianry to write.
+%% @spec binary_to_file(string(), string(), binary()) -> term()
 binary_to_file (Output_dir, File_name, Binary) ->
     Output_file = Output_dir ++ "/" ++ File_name,
     {ok, File} = file: open(Output_file, [write,binary]),
     ok = file: write(File, Binary),
     file: close (File).
 
+%% @doc Return the html documentation of the API. The html is returned with the
+%% simplified xmerl format [{tag, attributes, children}].
+%% @spec api_to_html (string()) -> [{atom(), [term()], [term()]}]
 api_to_html (API) ->
     Functions = extract_functions (API),
         F = fun (Function) -> 
@@ -34,6 +58,11 @@ api_to_html (API) ->
     Functions_html = lists: map (F, lists: sort(Sort, Functions)),
     [{table,[],lists: flatten (Functions_html)}].
 
+%% @doc Generate the html file.
+%% Output_dir is the destination directory.
+%% File_name is the name of the beam file.
+%% HTML is the html in the simplified xmerl format.
+%% @spec html_to_file(string(), string(), [{atom(), [term()],[term()]}]) -> term()
 html_to_file (Output_dir, File_name, HTML) ->
     {ok, File} = file: open (Output_dir ++ "/"  ++ File_name, [write]),
     ok = file: write (File, HTML),

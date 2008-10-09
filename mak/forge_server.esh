@@ -3,7 +3,7 @@ main ([]) ->
     try
 	true = code: add_path ("/home/charpi/projects/extremeforge/ebin"),
 	net_kernel: start(['forge@localhost',shortnames]),
-	Tester = forge: start_tester_with_shell_output ('slave@localhost'),
+	Tester = forge: start_tester_with_agency ('slave@localhost', 9091),
 	
 	On_change = default_callbacks: compile_and_deploy_module (Tester),
 	On_delete = default_callbacks: unload_module (Tester),
@@ -28,7 +28,7 @@ main ([]) ->
 	Options = Test_options ++ Erlang_options ,
 	Directory = "lib/selenium_remote",
 	
-	file_monitor: start_link (Directory, Options),
+	sentinel: start_link (Directory, Options),
 	receive
 	    stop_the_forge -> ok
 	end,

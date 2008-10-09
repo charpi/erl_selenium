@@ -1,6 +1,7 @@
 * XXX
 ** Internal
 - Change selenium_api and selenium_session build
+- Edoc
 * 20080913
 ** Bug Fix:
 - Remove R12 specific APIs introduced with 20080907
