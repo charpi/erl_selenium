@@ -3,14 +3,9 @@ main ([]) ->
     try
 	true = code: add_path ("/home/charpi/projects/extremeforge/ebin"),
 	net_kernel: start(['forge@localhost',shortnames]),
-	Tester = forge: start_tester_with_agency ('slave@localhost', 9091),
+	Tester = extremeforge: agency_tester_with_slave ('slave@localhost', 9091),
 	
-	On_change = default_callbacks: compile_and_deploy_module (Tester),
-	On_delete = default_callbacks: unload_module (Tester),
-	
-	Erlang_options = [{{extension,".erl"}, [{on_change, On_change},
-						{on_delete, On_delete}]}],
-	
+	Erlang_options = extremeforge: erlang_options (Tester),	
 	Change_api = fun (Filename)->  
 			     Tester ! {delete, [selenium_api,selenium_session]},
 			     Binary = modules: to_binary (Filename),
@@ -21,9 +16,9 @@ main ([]) ->
 							    "lib/selenium_remote/priv/iedoc.xml"),
 			     Tester ! [API, Session]
 			     end,
-	Delete_api = fun (_Filename)-> io:fwrite("DELETE api~n",[]) end,
-	Test_options = [{{name, "lib/selenium_remote/src/make_api.erl"}, [{on_change, Change_api},
-									  {on_delete, Delete_api}]}],
+	Delete_api = fun (_)-> ok end,
+	Actions = [{on_change, Change_api}, {on_delete, Delete_api}],
+	Test_options = [{{name, "lib/selenium_remote/src/make_api.erl"}, Actions}],
 
 	Options = Test_options ++ Erlang_options ,
 	Directory = "lib/selenium_remote",
