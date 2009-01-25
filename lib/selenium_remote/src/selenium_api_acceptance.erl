@@ -9,7 +9,7 @@
 
 -define (HOST,"localhost").
 -define (PORT,4444).
--define (COMMAND,"*firefox\ /usr/lib/firefox/firefox-2-bin").
+-define (COMMAND,"*firefox\ /usr/lib/firefox-3.0.5/firefox").
 
 -test ([default_server_test, google_test, keypress_test]).
 -test ([type_very_long_text_test, utf8_test, i18n_test]).
@@ -82,13 +82,13 @@ google_test () ->
 keypress_test () ->
     InputId = "ac4",
     UpdateId = "ac4update",
-    URL = "http://www.irian.at",
+    URL = "http://localhost:4444",
     Session = selenium: start (?HOST,
 			       ?PORT,
 			       ?COMMAND,
 			       URL),
     try
-    Ajax_url = "http://www.irian.at/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
+    Ajax_url = "http://localhost:4444/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
     selenium_api: open (Session, Ajax_url),
     selenium_api: key_press (Session, InputId, "74"),
     receive after 500 -> ok end,
