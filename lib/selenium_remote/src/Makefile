@@ -16,7 +16,8 @@ test: all
 	$(ERL) -pa ../ebin -s selenium_ut tests -s selenium_acceptance tests -s selenium_api_acceptance tests -s erlang halt
 
 start_server:
-	@java -jar ../priv/selenium-server-1.0-beta-1.jar -log /tmp/selenium_server.log > /dev/null 2>& 1 &\
+#	@java -jar ../priv/selenium-server-1.0-beta-1.jar -log /tmp/selenium_server.log > /dev/null 2>& 1 &
+	@java -jar ../priv/selenium-server-1.0-beta-2.jar -log /tmp/selenium_server.log > /dev/null 2>& 1 &\
 	echo $$! > /tmp/selenium_server.pid; \
 	sleep 5
 
