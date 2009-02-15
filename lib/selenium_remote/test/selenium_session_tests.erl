@@ -8,7 +8,6 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--define (HOST,"localhost").
 -define (PORT,4444).
 -define (COMMAND,"*firefox\ /usr/lib/firefox-3.0.6/firefox").
 

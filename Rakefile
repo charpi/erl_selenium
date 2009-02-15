@@ -26,6 +26,10 @@ task :stop_server do
   sh "kill `cat /tmp/selenium_server.pid`"
 end
 
-task :default => ['lib/selenium_remote/ebin/selenium_api.beam',
-                  'lib/selenium_remote/ebin/selenium_session.beam',
-                  "erlang:tests"]
+task :selenium_build => ['lib/selenium_remote/ebin/selenium_api.beam',
+                         'lib/selenium_remote/ebin/selenium_session.beam',
+                         "erlang:applications"]
+
+task :tests => [:selenium_build, "erlang:tests"]
+
+task :default => :selenium_build
