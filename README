@@ -6,4 +6,34 @@ external api, you are able to run your tests from any languages.
 
 Several client libraries existed but I needed one in erlang ... so I did it.
 
+= Compilation = 
+
+= Installation =
+
+= Usage =
+== Simple ==
+
+test () ->
+    Session = selenium :start (?HOST,?PORT, ?BROWSER, ?URL),
+    Start_url = "http://charpi.net",
+    selenium: cmd (Session, open, [Start_url]),
+    selenium: stop (Session).
+
+== Selenium API ==
+
+test () ->
+    Session = selenium :start (?HOST,?PORT, ?BROWSER, ?URL),
+    Start_url = "http://charpi.net",
+    selenium_api: open (Session, Start_url),
+    selenium: stop (Session).
+
+== Selenium Session ==
+
+test () ->
+    Session = selenium :launch_session (?HOST,?PORT, ?BROWSER, ?URL),
+    Start_url = "http://charpi.net",
+    Session: open (Start_url),
+    Session: stop_session ().
+
+
 Project web site: http://trac.charpi.net/charpi.net/wiki/erl_selenium
