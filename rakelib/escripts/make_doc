@@ -1,13 +1,12 @@
 %% -*- erlang -*-
-main([Application, Path]) ->
+%% Copyright (c) 2008 Nicolas Charpentier
+main([Application| Paths]) ->
     try
-	Dir = filename:join(filename:join(Path,Application),"ebin"),
-	code:add_path(Dir),
+	[code:add_path(Path) || Path <- Paths],
 	edoc: application (list_to_atom (Application))
     catch
         E:R ->
-	    io: format ("Error: ~p~n",[{E,R}]),
-            usage()
+	    exit({E,R,erlang:get_stacktrace()})
     end;
 main(_) ->
     usage().

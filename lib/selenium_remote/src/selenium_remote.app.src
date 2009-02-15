@@ -2,7 +2,7 @@
  [{description, "Selenium server remote control"},
   {author, "Nicolas Charpentier"},
   {vsn, %VSN%},
-  {modules, [%MODULES%]},
+  {modules, %MODULES%},
   {registered, []},
-  {applications, [kernel, stdlib]}
+  {applications, [kernel, stdlib, inets]}
  ]}.

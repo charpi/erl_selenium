@@ -4,32 +4,14 @@
 
 %% @author Nicolas Charpentier <open_source@charpi.net> [http://charpi.net]
 %% @copyright 2008 Nicolas Charpentier
--module (selenium_session_acceptance).
+-module (selenium_session_tests).
 
+-include_lib("eunit/include/eunit.hrl").
 
 -define (HOST,"localhost").
 -define (PORT,4444).
--define (COMMAND,"*firefox\ /usr/lib/firefox-3.0.5/firefox").
+-define (COMMAND,"*firefox\ /usr/lib/firefox-3.0.6/firefox").
 
--test ([default_server_test, google_test, keypress_test]).
--test ([type_very_long_text_test, utf8_test, i18n_test]).
-
--export([tests /0]).
--export([default_server_test /0]).
--export([google_test /0]).
--export([keypress_test /0]).
--export([type_very_long_text_test /0]).
--export([utf8_test /0]).
--export([i18n_test /0]).
-
-tests () ->
-    default_server_test(),
-    google_test(),
-    keypress_test(),
-    type_very_long_text_test(),
-    utf8_test(),
-    i18n_test(),
-    ok.
 
 default_server_test () ->
     URL = "http://localhost:4444",

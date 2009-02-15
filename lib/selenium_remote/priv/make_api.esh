@@ -1,7 +1,7 @@
 %% -*-erlang-*-   ; force emacs to enter erlang-mode
 main ([Type, Output_dir, API]) ->
     try
-	code: add_path ("../ebin"),
+	code: add_path (Output_dir),
 	handle_type(Type, API, Output_dir)
     catch Error: Reason ->
 	    Stack = erlang: get_stacktrace(),
