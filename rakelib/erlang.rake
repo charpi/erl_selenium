@@ -1,3 +1,4 @@
+
 # -*-ruby-*-
 # Copyright 2008-2009 Nicolas Charpentier
 # Distributed under BSD licence
@@ -72,7 +73,7 @@ namespace :erlang do
     modules = "[" + modules.join(', ') + "]"
   end
   
-  def check_dependencies (beam, file)
+  def check_dependencies (file)
     dependencies = []
     IO.foreach(file) { |line|
       header = if line =~ /^-include\("(.*)"\)/
@@ -86,8 +87,8 @@ namespace :erlang do
                  end
                end
       if header 
-        dependencies << "#{beam}: #{header}" 
-        dependencies <<  check_dependencies(beam, header)
+        dependencies << "#{header}"
+        dependencies <<  check_dependencies(header)
       end
     } if File.file?(file)
     dependencies.flatten
@@ -96,7 +97,6 @@ namespace :erlang do
   def erlang_include_dependencies
     erlang_source_dependencies + erlang_test_dependencies
   end
-
 
   def run_application_test(application, directories)
     application_name = application.pathmap("%f").ext("")
@@ -113,7 +113,6 @@ namespace :erlang do
     sh "#{ERL_TOP}/bin/escript #{script_file} #{parameters.join(' ')}"
   end
 
-
   def make_boot_file(output, source)
     if output =~ /^release_local/
       style = "local"
@@ -123,7 +122,6 @@ namespace :erlang do
     run_script("make_script",[style, source, output] + ERL_DIRECTORIES)
   end
   
-
   ERL_SOURCES = FileList['lib/*/src/*.erl']
   ERL_BEAM = ERL_SOURCES.pathmap("%{src,ebin}X.beam")
 
@@ -151,6 +149,7 @@ namespace :erlang do
   end
 
   directory "releases"
+  directory "applications"
   CLEAN.include "release_local"
 
   ERL_DIRECTORIES.each do |d| 
@@ -160,20 +159,33 @@ namespace :erlang do
 
   CLEAN.include("lib/*/test/*.beam")
 
+  def beam_dependencies_with_emake(beam, file) 
+    dependencies = check_dependencies(file).uniq
+    dependencies.collect { |dependency|
+      ["#{beam}: #{dependency}", "Emakefile: #{dependency}"]
+    } + ["#{beam} : #{file}", "#{beam}: Emakefile"]
+  end
+
+  def beam_dependencies(beam, file) 
+    dependencies = check_dependencies(file).uniq
+    dependencies.collect { |dependency|
+      ["#{beam}: #{dependency}"]
+    } + ["#{beam} : #{file}"]
+  end
 
   if USE_EMAKE 
     def erlang_test_dependencies
       FileList['lib/*/test/*.erl'].collect { |file|
         beam = file.pathmap("%X.beam")
-        ["#{beam}: Emakefile","#{beam}: #{file}"] + check_dependencies(beam, file).uniq
+        beam_dependencies_with_emake(beam, file) 
       }.flatten
     end
     
     def erlang_source_dependencies
       FileList['lib/*/src/*.erl'].collect { |file|
         beam = file.pathmap("%{src,ebin}X.beam")
-        ["#{beam}: Emakefile","#{beam}: #{file}"] + check_dependencies(beam, file).uniq
-      }.flatten
+        beam_dependencies_with_emake(beam, file)
+     }.flatten
     end
     
     file "Emakefile" => ERL_SOURCES + ERL_TESTS do |t|
@@ -190,7 +202,6 @@ namespace :erlang do
         end
       end
       sh "#{ERL_TOP}/bin/erl -noinput -s make all -s erlang halt "
-
     end
     CLEAN.include "Emakefile"
     
@@ -203,14 +214,14 @@ namespace :erlang do
     def erlang_test_dependencies
       FileList['lib/*/test/*.erl'].collect { |file|
         beam = file.pathmap("%X.beam")
-        ["#{beam}: #{file}"] + check_dependencies(beam, file).uniq
+        beam_dependencies(beam, file)
       }.flatten
     end
     
     def erlang_source_dependencies
       FileList['lib/*/src/*.erl'].collect { |file|
         beam = file.pathmap("%{src,ebin}X.beam")
-        ["#{beam}: #{file}"] + check_dependencies(beam, file).uniq
+        beam_dependencies(beam, file)
       }.flatten
     end
     
@@ -243,7 +254,6 @@ namespace :erlang do
   end
 
   rule ".rel" => proc {|a| release_to_src(a)}  do |t|
-    
     configuration = t.source.pathmap("%d/../vsn.config")
     release_name = extract_version_information(configuration,"release_name")
     output = t.name.pathmap("%X.rel")
@@ -362,4 +372,13 @@ namespace :erlang do
   task :compile => [:modules, :applications, :tests]
 
   task :default => [:compile]
+
+  desc "Build Application packages"
+  task :package => [:applications] do
+    ERL_APPLICATIONS.each do |application|
+      application_directory = application.pathmap("%{ebin}d")
+      name = application.pathmap("%f").ext("")
+      all_files = FileList.new(application_directory+"/*/*")
+    end
+  end
 end
