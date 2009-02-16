@@ -18,13 +18,13 @@
 -export([parse_body/2]).
 -export([command_to_string/1]).
 
-%% @type selenium_session(). An abstract session
-%% @type selenium_command_result(). {ok, none} | {ok, term()} | {failed, term()}.
-%% @type module_instance(). Instance of a parametrized module
+-type(selenium_session() :: tuple()).
+-type(selenium_command_result() :: {ok, none} | {ok, term()} | {failed, term()}).
+-type(module_instance() :: term()).
 
 %% @doc Starts a selenium session which can be used with cmd/3 and cmd_array/3
 %% functions.
-%% @spec start(string(), integer(), string(), string()) -> selenium_session()
+-spec(start(Host :: string(), integer(), string(), string()) -> selenium_session()).
 start(Host, Port, Command, URL) ->
     application:start(inets),
     Get_new_browser = {getNewBrowserSession, [Command, URL]},
@@ -34,8 +34,7 @@ start(Host, Port, Command, URL) ->
     {Host, Port, normalize_session_id(Body)}.
 
 %% @doc Returns a module selenium_session which can be used directly.
-%% @spec launch_session(string(),integer(),string(),string()) ->
-%% module_instance().
+-spec(launch_session(string(),integer(),string(),string()) -> module_instance()).
 launch_session(Host, Port, Command, URL) ->
     S = start(Host, Port, Command, URL),
     try 
@@ -46,32 +45,31 @@ launch_session(Host, Port, Command, URL) ->
     end.
 
 %% @doc Tells to the selenium server to close the session.
-%% @spec stop(selenium_session()) -> selenium_command_result()
+-spec(stop(selenium_session()) -> selenium_command_result()).
 stop(Session) ->
-    {ok, Result} = cmd(Session, testComplete, []),
-    Result.
+    cmd(Session, testComplete, []).
 
 %% @doc Sends a command to the selenium server through a session. The result of
 %% the command is not interpreted as an array
-%% @spec cmd(selenium_session(), string()) -> selenium_command_result()
+-spec(cmd(selenium_session(), atom()) -> selenium_command_result()).
 cmd(Session, Command) ->
     cmd(Session, Command, []).
 
 %% @doc Sends a command to the selenium server through a session. The result of
 %% the command is not interpreted as an array
-%% @spec cmd(selenium_session(), string(), [string()]) -> selenium_command_result()
+-spec(cmd(selenium_session(), atom(), [string()]) -> selenium_command_result()).
 cmd(Session, Command, Params) ->
     cmd(Session, Command, Params, fun result_as_standard/1).
 
 %% @doc Sends a command to the selenium server through a session. The result of
 %% the command is interpreted as an array
-%% @spec cmd_array(selenium_session(), string()) -> selenium_command_result()
+-spec(cmd_array(selenium_session(), atom()) -> selenium_command_result()).
 cmd_array(Session, Command) ->
     cmd_array(Session, Command, []).
 
 %% @doc Sends a command to the selenium server through a session. The result of
 %% the command is interpreted as an array
-%% @spec cmd_array(selenium_session(), string(), [string()]) -> selenium_command_result()
+-spec(cmd_array(selenium_session(), atom(), [string()]) -> selenium_command_result()).
 cmd_array(Session, Command, Params) ->
     cmd(Session, Command, Params, fun result_as_array/1).
 

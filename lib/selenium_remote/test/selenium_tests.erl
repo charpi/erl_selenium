@@ -1,4 +1,4 @@
- %%% Copyright (c) 2007,2008 Nicolas Charpentier
+%%% Copyright (c) 2007,2008 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
 
