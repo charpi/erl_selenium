@@ -8,10 +8,6 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--define (PORT,4444).
--define (COMMAND,"*firefox\ /usr/lib/firefox-3.0.6/firefox").
-
-
 default_server_test () ->
     URL = "http://localhost:4444",
     Session = selenium: start (?HOST,

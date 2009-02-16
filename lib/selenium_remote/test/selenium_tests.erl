@@ -1,4 +1,4 @@
-%%% Copyright (c) 2007,2008 Nicolas Charpentier
+ %%% Copyright (c) 2007,2008 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
 
@@ -7,9 +7,6 @@
 -module (selenium_tests).
 
 -include_lib("eunit/include/eunit.hrl").
-
--define (PORT,4444).
--define (COMMAND,"*firefox\ /usr/lib/firefox-3.0.6/firefox").
 
 command_to_string_test () ->
     Test_fun = fun ({Expected, Command}) ->
