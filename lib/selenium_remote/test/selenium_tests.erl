@@ -149,13 +149,13 @@ keypress_test () ->
  	Ajax_url = "http://localhost:4444/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
  	selenium: cmd (Session, open, [Ajax_url]),
  	selenium: cmd (Session, keyPress, [InputId, "74"]),
- 	receive after 500 -> ok end,
+ 	receive after 5000 -> ok end,
  	selenium: cmd (Session, keyPress, [InputId, "97"]),
  	selenium: cmd (Session, keyPress, [InputId, "110"]),
- 	receive after 500 -> ok end,
+ 	receive after 5000 -> ok end,
  	{ok, "Jane Agnews"} = selenium: cmd (Session, getText, [UpdateId]),
  	selenium: cmd (Session, keyPress, [InputId, "13"]),
- 	receive after 500 -> ok end,
+ 	receive after 5000 -> ok end,
  	{ok, "Jane Agnews"} = selenium: cmd (Session, getValue, [InputId])
     catch E:R ->
  	    exit ({E,R,erlang:get_stacktrace ()})
@@ -229,8 +229,8 @@ i18n_test () ->
 	Test = fun({Id,Data}) ->
 		       UTF8 = xmerl_ucs:to_utf8(Data),
 		       Result = selenium: cmd (Session, isTextPresent, [UTF8]),
-		       {ok, "true"} = Result,
-		       {ok, UTF8} = selenium: cmd(Session, getText, [Id])
+		       {is_text_present, {ok, "true"}} = {is_text_present, Result},
+		       {get_text, {ok, UTF8}} = {get_text, selenium: cmd(Session, getText, [Id])}
 	       end,
 	lists:foreach(Test, Datas)
     catch E:R ->
@@ -277,9 +277,8 @@ wait_for_page_to_load () ->
 
 selenium_config () ->
     URL = "http://localhost:4444",
-    BrowserBinary = "/usr/lib/firefox-3.0.6/firefox",
     [{server, {?HOST, ?PORT}},
-     {browser, {"*firefox", BrowserBinary}},
+     {browser, ?COMMAND},
      {url, URL}].
 
 

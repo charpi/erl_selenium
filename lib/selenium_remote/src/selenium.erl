@@ -89,9 +89,8 @@ cmd(Session, Command, Params, Fun) when is_list(Params) ->
 launch_command_session(Config) ->
     Config_value = dict:from_list(Config),
     {ok, {Host, Port}} = dict:find(server, Config_value),
-    {ok, {Browser, Browser_binary}} = dict:find(browser, Config_value),
+    {ok, Browser_command} = dict:find(browser, Config_value),
     {ok, URL} = dict:find(url, Config_value),
-    Browser_command = Browser ++ " " ++ Browser_binary,
     selenium:start(Host, Port, Browser_command, URL).
 
 run_command(Session, {Key, Params}) ->
