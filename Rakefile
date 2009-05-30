@@ -2,7 +2,7 @@
 require 'rake'
 
 task :start_server do
-  sh "java -jar lib/selenium_remote/priv/selenium-server-1.0-beta-2.jar -log /tmp/selenium_server.log > /dev/null 2>& 1 &\
+  sh "java -jar lib/selenium_remote/priv/selenium-server-1.0.jar -log /tmp/selenium_server.log > /dev/null 2>& 1 &\
       echo $! > /tmp/selenium_server.pid;"
 end
 
