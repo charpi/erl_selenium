@@ -233,7 +233,7 @@ transform_accumulator([H|T]) when is_list(H) ->
 transform_accumulator(Acc) ->
     [Acc].
 
-encode_url_params(Str) when list(Str) ->
+encode_url_params(Str) when is_list(Str) ->
     encode_url_params(lists:reverse(Str), []).
 
 encode_url_params([32 | T], Acc) ->
