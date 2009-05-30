@@ -1,28 +1,9 @@
-{inparallel, 1, [
- {timeout, 60, {selenium_tests, command_to_string_test}},
-		 {timeout, 60, {selenium_tests, build_request_without_id_test}},
-		 {timeout, 60, {selenium_tests, build_request_test}},
-		 {timeout, 60, {selenium_tests, parse_body_test}},
-		 {timeout, 60, {selenium_tests, start_session_test}},
-		 {timeout, 60, {selenium_tests, default_server_test}},
-		 {timeout, 60, {selenium_tests, high_level_test}},
-		 {timeout, 60, {selenium_tests, i18n_test}},
-		 {timeout, 60, {selenium_tests, utf8_test}},
-		 {timeout, 60, {selenium_tests, type_very_long_text_test}},
-		 {timeout, 60, {selenium_tests, keypress_test}},
-		 {timeout, 60, {selenium_tests, google_test}},
-		 
-		 {timeout, 60, {selenium_api_tests, default_server_test}},
-		 {timeout, 60, {selenium_api_tests, i18n_test}},
-		 {timeout, 60, {selenium_api_tests, utf8_test}},
-		 {timeout, 60, {selenium_api_tests, type_very_long_text_test}},
-		 {timeout, 60, {selenium_api_tests, keypress_test}},
-		 {timeout, 60, {selenium_api_tests, google_test}},
-		 
-		 {timeout, 60, {selenium_session_tests, default_server_test}},
-		 {timeout, 60, {selenium_session_tests, i18n_test}},
-		 {timeout, 60, {selenium_session_tests, utf8_test}},
-		 {timeout, 60, {selenium_session_tests, type_very_long_text_test}},
-		 {timeout, 60, {selenium_session_tests, keypress_test}},
-		 {timeout, 60, {selenium_session_tests, google_test}}
-]}.
+{inparallel, 1, [{generator, test_generator, selenium_tests},
+		 {generator, test_generator, session_tests},
+		 {generator, test_generator, api_tests}]}.
+{inparallel, 6, [{timeout, 60, {selenium_tests, command_to_string_test}},
+ 		 {timeout, 60, {selenium_tests, build_request_without_id_test}},
+ 		 {timeout, 60, {selenium_tests, build_request_test}},
+ 		 {timeout, 60, {selenium_tests, parse_body_test}},
+ 		 {timeout, 60, {selenium_tests, start_session_test}},
+ 		 {timeout, 60, {selenium_tests, high_level_test}}]}.

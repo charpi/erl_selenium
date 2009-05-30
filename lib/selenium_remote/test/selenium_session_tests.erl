@@ -1,4 +1,4 @@
-%%% Copyright (c) 2008 Nicolas Charpentier
+%%% Copyright (c) 2008-2009 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
 
@@ -8,12 +8,17 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-default_server_test () ->
-    URL = "http://localhost:4444",
-    Session = selenium: launch_session (?HOST,
-					?PORT,
-					?COMMAND,
-					URL),
+-export ([fast_tests/0]).
+
+fast_tests () ->
+    [fun default_server_test/1,
+     fun i18n_test/1,
+     fun utf8_test/1,
+     fun type_very_long_text_test/1,
+     fun keypress_test/1,
+     fun google_test/1].
+
+default_server_test (Session) ->
     Start_url = "/selenium-server/tests/html/test_click_page1.html",
     Session: open (Start_url),
     
@@ -27,31 +32,19 @@ default_server_test () ->
     Session: wait_for_page_to_load ( "5000"),
     Session: click ( "previousPage"),
     Session: wait_for_page_to_load ( "5000"),
-    Session: stop_session (),
     ok.
 
-google_test () ->
-    URL = "http://www.google.com/webhp",
-    Session = selenium: launch_session (?HOST,
-					?PORT,
-					?COMMAND,
-					URL),
+google_test (Session) ->
     Session: open ( "http://www.google.com/webhp"),
     Session: type ( "q", "hello world"),
     Session: click ( "btnG"),
     Session: wait_for_page_to_load ( "5000"),
     {ok,"hello world - Google Search"} = Session: get_title (),
-    Session: stop_session (),
     ok.
 
-keypress_test () ->
+keypress_test (Session) ->
     InputId = "ac4",
     UpdateId = "ac4update",
-    URL = "http://localhost:4444",
-    Session = selenium: launch_session (?HOST,
-					?PORT,
-					?COMMAND,
-					URL),
     Ajax_url = "http://localhost:4444/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
     Session: open ( Ajax_url),
     Session: key_press ( InputId, "74"),
@@ -63,27 +56,17 @@ keypress_test () ->
     Session: key_press( InputId, "13"),
     receive after 500 -> ok end,
     {ok, "Jane Agnews"} = Session: get_value ( InputId),
-    Session: stop_session ().
+    ok.
 
-type_very_long_text_test () ->
-    URL = "http://localhost:4444",
+type_very_long_text_test (Session) ->
     LongText = lists:duplicate (50000, $z), 
-    Session = selenium: launch_session (?HOST,
-					?PORT,
-					?COMMAND,
-					URL),
     Start_url = "/selenium-server/tests/html/test_rich_text.html",
     Session: open ( Start_url),
     Session: type ( "richtext", LongText),
     {ok, LongText} = Session: get_value ( "richtext"),
-    Session: stop_session ().
+    ok.
 
-utf8_test () ->    
-    URL = "http://localhost:4444",
-    Session = selenium: launch_session (?HOST,
-					?PORT,
-					?COMMAND,
-					URL),
+utf8_test (Session) ->    
     Start_url = "/selenium-server/tests/html/test_editable.html",
     Session: open ( Start_url),
     Session: wait_for_page_to_load ("5000"),
@@ -95,15 +78,10 @@ utf8_test () ->
 	   end,
     Inputs = ["foo", xmerl_ucs: to_utf8 (String)],
     lists: foreach (Test, Inputs),
-    Session: stop_session ().
+    ok.
 
-i18n_test () ->
-    URL = "http://localhost:4444",
+i18n_test (Session) ->
     Start_url = "/selenium-server/tests/html/test_i18n.html",
-    Session = selenium: launch_session (?HOST,
-					?PORT,
-					?COMMAND,
-					URL),
     Session: open ( Start_url),
     Datas = [
 	     {"romance", [252,246,228,220,214,196,32,231,232,233,32,191,241,32,232,224,249,242]},
@@ -120,4 +98,4 @@ i18n_test () ->
 		   {ok, UTF8} = Session: get_text ( Id)
 	   end,
     lists:foreach(Test, Datas),
-    Session: stop_session ().
+    ok.
