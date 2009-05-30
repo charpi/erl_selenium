@@ -17,4 +17,8 @@ end
 
 task :tests => [:selenium_build, "erlang:tests"]
 
+task :doc => ["erlang:edoc"] do
+  sh "#{ERL_TOP}/bin/escript lib/selenium_remote/priv/make_api.esh doc lib/selenium_remote/doc lib/selenium_remote/priv/iedoc.xml -- lib/selenium_remote/ebin"
+end
+
 task :default => :selenium_build

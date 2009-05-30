@@ -1,17 +1,27 @@
 %% -*-erlang-*-   ; force emacs to enter erlang-mode
-main ([Type, Output_dir, API]) ->
+main ([Type, Output_dir| Rest]) ->
     try
-	code: add_path (Output_dir),
-	handle_type(Type, API, Output_dir)
+	{APIs, Paths} = expand_params(Rest),
+	[code: add_path (Dir) || Dir <- [Output_dir | Paths]],
+	handle_type(Type, APIs, Output_dir)
     catch Error: Reason ->
 	    Stack = erlang: get_stacktrace(),
 	    Params = [{Error,Reason}, Stack],
 	    io: fwrite("Api generation failed ~p:~p~n",Params)
     end.
 
+expand_params(Params) ->
+    expand_params(Params,[]).
+
+expand_params([],Acc) ->
+    {Acc,[]};
+expand_params(["--"|Rest],Acc) ->
+    {Acc, Rest};
+expand_params([A|Rest], Acc) ->
+    expand_params(Rest,[A|Acc]).
+
+
 handle_type("doc", API, Output_dir) ->
-    HTML = make_api: api_to_html (API),
-    make_api: html_to_file (Output_dir, "selenium_api.html", HTML);
+    make_api: html_to_file (Output_dir, "api.html", API);
 handle_type(Type, API, Output_dir) ->
-    {File_name, Binary} = make_api: api_to_binary (Type, API),
-    make_api: binary_to_file (Output_dir, File_name, Binary).
+    make_api: binary_to_file (Type, API, Output_dir).

@@ -25,7 +25,7 @@
 %% <ul><li>"api" to generate the binary version of selenium_api</li>
 %% <li>"session" to generate the binary version of selenium_session</li></ul>.
 %% The parameter API is the file path to the api xml file.
-%% @spec api_to_binary(module_type(), string()) -> {string(), binary()}
+%% @spec api_to_binary(module_type(), [string()]) -> {string(), binary()}
 api_to_binary (Type, API) ->
     Functions = extract_functions (API),
     {File_name, Forms} = functions_to_module (Type, Functions),
@@ -36,24 +36,25 @@ api_to_binary (Type, API) ->
 %% Output_dir is the destination directory.
 %% File_name is the name of the beam file.
 %% Binary is the bianry to write.
-%% @spec binary_to_file(string(), string(), binary()) -> term()
-binary_to_file (Output_dir, File_name, Binary) ->
-    Output_file = Output_dir ++ "/" ++ File_name,
+%% @spec binary_to_file(module_type(), [string()], string()) -> term()
+binary_to_file (Type, API, Output_dir) ->
+    {File_name, Binary} = make_api: api_to_binary (Type, API),
+    Output_file = filename:join(Output_dir, File_name),
     {ok, File} = file: open(Output_file, [write,binary]),
     ok = file: write(File, Binary),
     file: close (File).
 
 %% @doc Return the html documentation of the API. The html is returned with the
 %% simplified xmerl format [{tag, attributes, children}].
-%% @spec api_to_html (string()) -> [{atom(), [term()], [term()]}]
+%% @spec api_to_html ([string()]) -> [{atom(), [term()], [term()]}]
 api_to_html (API) ->
     Functions = extract_functions (API),
         F = fun (Function) -> 
 		{Name, Param, _, Comments} = function_information (Function),
 		Params_html = [{b,[],[camel_case_to_erlang(Name)]},{br,[],[]},
 			       "Params:",{ul, [], [{li,[],[P]} || P <- Param]}],
-		[{tr,[],[{td,[],Params_html},{td,[{valign,"top"}], [Comments]}]}]
-    end,
+		    [{tr,[],[{td,[],Params_html},{td,[{valign,"top"}], Comments}]}]
+	    end,
     Sort = fun (A,B) -> sort_xml_element(A,B) end,
     Functions_html = lists: map (F, lists: sort(Sort, Functions)),
     [{table,[],lists: flatten (Functions_html)}].
@@ -62,13 +63,18 @@ api_to_html (API) ->
 %% Output_dir is the destination directory.
 %% File_name is the name of the beam file.
 %% HTML is the html in the simplified xmerl format.
-%% @spec html_to_file(string(), string(), [{atom(), [term()],[term()]}]) -> term()
-html_to_file (Output_dir, File_name, HTML) ->
-    {ok, File} = file: open (Output_dir ++ "/"  ++ File_name, [write]),
-    ok = file: write (File, HTML),
+%% @spec html_to_file(string(), string(), [string()]) -> term()
+html_to_file (Output_dir, File_name, API) ->
+    HTML = make_api: api_to_html (API),
+    Bytes = xmerl:export_simple(HTML, xmerl_html),
+    {ok, File} = file: open (filename:join(Output_dir, File_name), [write]),
+    ok = file: write (File, Bytes),
     file: close (File).
 
-extract_functions (API) ->
+extract_functions (APIs) when is_list(APIs) ->
+    lists:concat([do_extract_functions(A) || A <- APIs]).
+
+do_extract_functions (API) ->
     {Root, []} = xmerl_scan: file(API, []),
     xmerl_xpath: string("function", Root).
 
