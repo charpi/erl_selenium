@@ -25,7 +25,7 @@ task :deliver => [] do
   version=`svnversion -n`
   export_directory="/tmp/selenium"
   sh "rm -fr #{export_directory}; svn export . #{export_directory}"
-  sh "tar -czv -f selenium_#{version}.tgz -C  /tmp"
+  sh "tar -czv -f selenium_#{version}.tgz -C  /tmp selenium"
 end
 
 task :default => :selenium_build
