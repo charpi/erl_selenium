@@ -21,4 +21,11 @@ task :doc => ["erlang:edoc"] do
   sh "#{ERL_TOP}/bin/escript lib/selenium_remote/priv/make_api.esh doc lib/selenium_remote/doc lib/selenium_remote/priv/iedoc.xml -- lib/selenium_remote/ebin"
 end
 
+task :deliver => [] do
+  version=`svnversion -n`
+  export_directory="/tmp/selenium"
+  sh "rm -fr #{export_directory}; svn export . #{export_directory}"
+  sh "tar -czv -f selenium_#{version}.tgz -C  /tmp"
+end
+
 task :default => :selenium_build
