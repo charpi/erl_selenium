@@ -8,7 +8,13 @@ Several client libraries existed but I needed one in erlang ... so I did it.
 
 = Compilation = 
 
+* Edit the file erlang_config.rb and update
+   ERL_TOP="/usr/local/lib/erlang_R13-B0"
+* Execute rake in a shell window
+
 = Installation =
+
+* Put the directory selenium_remote/ebin in your ERL_PATH.
 
 = Usage =
 == Simple ==
