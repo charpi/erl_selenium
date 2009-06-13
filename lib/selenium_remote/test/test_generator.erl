@@ -6,46 +6,38 @@
 %% @copyright 2009 Nicolas Charpentier
 -module(test_generator).
 
--export ([api_tests/0]).
--export ([start_session/0]).
--export ([launch_session/0]).
--export ([selenium_tests/0]).
--export ([session_tests/0]).
+-export([start_stop /1]).
+-export([launch_close /1]).
+
+-define (URL, "http://localhost:4444").
+
+start_stop(Module) ->
+    [{setup, fun start_session/0, fun stop_session/1, 
+      fast_tests(Module)}].
 
 start_session () ->
-    URL = "http://localhost:4444",
-    selenium: start (?HOST, ?PORT, ?COMMAND, URL).
-
-launch_session () ->
-    URL = "http://localhost:4444",
-    selenium: launch_session (?HOST, ?PORT, ?COMMAND, URL).
-
-close_session (Session) ->
-    Session: stop_session ().
+    selenium: start (?HOST, ?PORT, ?COMMAND, ?URL).
 
 stop_session (Session) ->
     selenium: stop (Session).
 
-selenium_tests () ->
-    [{setup, fun start_session/0, 
-      fun stop_session/1,
-      generate_tests_fun(selenium_tests)}].
+launch_close(Module) ->
+    [{setup, fun launch_session/0, fun close_session/1, 
+      fast_tests(Module)}].
 
-api_tests () ->
-    [{setup, fun start_session/0, 
-      fun stop_session/1,
-      generate_tests_fun(selenium_api_tests)}].
+launch_session () ->
+    selenium: launch_session (?HOST, ?PORT, ?COMMAND, ?URL).
 
-session_tests () ->
-    [{setup, fun launch_session/0, 
-      fun close_session/1,
-      generate_tests_fun(selenium_session_tests)}].
+close_session (Session) ->
+    Session: stop_session ().
 
-generate_tests_fun(Module) ->
+fast_tests (Module) ->
+    Tests = [default_server_test,
+	     i18n_test,
+	     utf8_test,
+	     type_very_long_text_test,
+	     keypress_test,
+	     google_test],
     fun (X) ->
-	    Tests = Module: fast_tests (),
-	    [generate_test (T,X) || T <- Tests]
+	    [{timeout, 60, fun() -> Module:T(X) end} || T <- Tests]
     end.
-
-generate_test (T, X) ->
-    {timeout, 60, fun() -> T(X) end}.

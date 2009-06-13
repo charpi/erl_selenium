@@ -8,15 +8,19 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--export ([fast_tests/0]).
+-export([default_server_test /1]).
+-export([google_test /1]).
+-export([keypress_test /1]).
+-export([type_very_long_text_test /1]).
+-export([utf8_test /1]).
+-export([i18n_test /1]).
 
-fast_tests () ->
-    [fun default_server_test/1,
-     fun i18n_test/1,
-     fun utf8_test/1,
-     fun type_very_long_text_test/1,
-     fun keypress_test/1,
-     fun google_test/1].
+all_test_() ->
+    [{inparallel, 2, [{timeout, 60, fun start_session/0},
+		      {timeout, 60, fun high_level/0}]}].
+
+fast_test_() ->
+    test_generator: start_stop(?MODULE).
 
 default_server_test (Session) ->
     Start_url = "/selenium-server/tests/html/test_click_page1.html",
@@ -30,10 +34,8 @@ default_server_test (Session) ->
 
     selenium: cmd (Session, click, ["link"]),
     selenium: cmd (Session, waitForPageToLoad, ["5000"]),
-    %%    Head ++ "/selenium-server/tests/html/test_click_page2.html" = selenium:cmd(get_location,Session),
     selenium: cmd (Session, click, ["previousPage"]),
     selenium: cmd (Session, waitForPageToLoad, ["5000"]),
-    %%    Head ++ "/selenium-server/tests/html/test_click_page1.html" = selenium:cmd(get_location,Session),
     ok.
 
 google_test (Session) ->
@@ -172,7 +174,7 @@ parse_body_test () ->
     {ok, ["comma, test"," other line"]} = selenium:parse_body (array, "OK,comma\\\, test, other line"),
     ok.
 
-start_session_test () ->
+start_session () ->
     URL = "http://localhost:4444",
     io:format("Test~n"),
     Session = selenium: start (?HOST,
@@ -182,7 +184,7 @@ start_session_test () ->
     selenium: stop (Session),
     ok.
 
-high_level_test () ->
+high_level () ->
     Config = selenium_config (),
     Commands = commands (),
     Results = selenium: run (Config, Commands),
@@ -192,7 +194,6 @@ high_level_test () ->
      {{{array, getAllLinks}, [], _}, {ok, "OK"}},
      {{click, ["link"]}, {not_tested, {ok, none}}},
      {{waitForPageToLoad, ["5000"]}, {not_tested, {ok, none}}}] = Results.
-
 
 commands () ->
     [open (),
@@ -222,8 +223,6 @@ selenium_config () ->
     [{server, {?HOST, ?PORT}},
      {browser, ?COMMAND},
      {url, URL}].
-
-
 
 id () ->
     "666".

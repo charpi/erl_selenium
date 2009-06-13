@@ -8,15 +8,15 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--export ([fast_tests/0]).
+-export([default_server_test /1]).
+-export([google_test /1]).
+-export([keypress_test /1]).
+-export([type_very_long_text_test /1]).
+-export([utf8_test /1]).
+-export([i18n_test /1]).
 
-fast_tests () ->
-    [fun default_server_test/1,
-     fun i18n_test/1,
-     fun utf8_test/1,
-     fun type_very_long_text_test/1,
-     fun keypress_test/1,
-     fun google_test/1].
+fast_test_() ->
+    test_generator: launch_close (?MODULE).
 
 default_server_test (Session) ->
     Start_url = "/selenium-server/tests/html/test_click_page1.html",
@@ -89,7 +89,6 @@ i18n_test (Session) ->
 	     {"chinese", [20013,25991]},
 	     {"japanese", [12414,12407]},
 	     {"dangerous", "&%?\\+|,%*"}],
-    
     
     Test = fun({Id,Data}) ->
 		   UTF8 = xmerl_ucs:to_utf8(Data),

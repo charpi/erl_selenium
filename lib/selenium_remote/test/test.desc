@@ -1,9 +1,0 @@
-{inparallel, 1, [{generator, test_generator, selenium_tests},
-		 {generator, test_generator, session_tests},
-		 {generator, test_generator, api_tests}]}.
-{inparallel, 6, [{timeout, 60, {selenium_tests, command_to_string_test}},
- 		 {timeout, 60, {selenium_tests, build_request_without_id_test}},
- 		 {timeout, 60, {selenium_tests, build_request_test}},
- 		 {timeout, 60, {selenium_tests, parse_body_test}},
- 		 {timeout, 60, {selenium_tests, start_session_test}},
- 		 {timeout, 60, {selenium_tests, high_level_test}}]}.
