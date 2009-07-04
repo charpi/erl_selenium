@@ -1,7 +1,8 @@
-* XXX
-** Internal
-- Change selenium_api and selenium_session build
-- Edoc
+*rXX
+** Changes
+- Add an option to set an timeout on HTTP requests
+- Change the return value of selenium:cmd; 'failed' become 'error'
+*r83
 * 20080913
 ** Bug Fix:
 - Remove R12 specific APIs introduced with 20080907

@@ -1,11 +1,13 @@
-%%% Copyright(c) 2007,2008 Nicolas Charpentier
+%%% Copyright(c) 2007-2009 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
 
 %% @author Nicolas Charpentier <open_source@charpi.net> [http://charpi.net]
-%% @copyright 2007,2008 Nicolas Charpentier
+%% @copyright 2007-2009 Nicolas Charpentier
 
 -module(selenium).
+
+-export([set_options/2]).
 
 -export([start/4, stop/1]).
 -export([launch_session/4]).
@@ -18,20 +20,20 @@
 -export([parse_body/2]).
 -export([command_to_string/1]).
 
--type(selenium_session() :: tuple()).
--type(selenium_command_result() :: {ok, none} | {ok, term()} | {failed, term()}).
--type(module_instance() :: term()).
+-type(selenium_session() :: {string(), integer(), any(), [term()]}).
+-type(selenium_command_result() :: {ok, none | [any()] |  number()} | {error, any()}).
+-type(module_instance() :: any()).
+
+%% @doc Set HTTP options that will be used for each commands.
+-spec(set_options(selenium_session(), [term()]) -> selenium_session()).
+set_options ({H, P, Id, _ }, Options) when is_list(Options), is_list(H), is_integer(P) ->
+    {H, P , Id, Options}.
 
 %% @doc Starts a selenium session which can be used with cmd/3 and cmd_array/3
 %% functions.
 -spec(start(Host :: string(), integer(), string(), string()) -> selenium_session()).
 start(Host, Port, Command, URL) ->
-    application:start(inets),
-    Get_new_browser = {getNewBrowserSession, [Command, URL]},
-    RequestUrl = build_request_without_id(Host, Port, Get_new_browser),
-    Result = send_request(RequestUrl),
-    {ok, Body} = parse_body(standard, Result),
-    {Host, Port, normalize_session_id(Body)}.
+    start(Host, Port, Command, URL, []).
 
 %% @doc Returns a module selenium_session which can be used directly.
 -spec(launch_session(string(),integer(),string(),string()) -> module_instance()).
@@ -73,6 +75,17 @@ cmd_array(Session, Command) ->
 cmd_array(Session, Command, Params) ->
     cmd(Session, Command, Params, fun result_as_array/1).
 
+%% @private
+start(Host, Port, Command, URL, HTTP_options) ->
+    application:start(inets),
+    Get_new_browser = {getNewBrowserSession, [Command, URL]},
+    RequestUrl = build_request_without_id(Host, Port, Get_new_browser),
+    
+    Result = send_request(RequestUrl, HTTP_options),
+    {ok, Body} = result_as_standard(Result),
+    {Host, Port, normalize_session_id(Body), HTTP_options}.
+
+
 run(Config, Commands) when is_list(Config) ->
     Session = launch_command_session(Config),
     Excecute = fun(Command) -> run_command(Session, Command) end,
@@ -81,9 +94,9 @@ run(Config, Commands) when is_list(Config) ->
     Results.
 
 cmd(Session, Command, Params, Fun) when is_list(Params) ->
-    {Host, Port, Id} = Session,
+    {Host, Port, Id, HTTP_options} = Session,
     Request = build_request(Host, Port, Id, {Command, Params}),
-    Result = send_request(Request),
+    Result = send_request(Request, HTTP_options),
     Fun(Result).
 
 launch_command_session(Config) ->
@@ -131,7 +144,7 @@ request_url(Host, Port) ->
 
 %% @private
 build_request_without_id(Host, Port, Command)  ->
-    {request_url(Host, Port),command_to_string(Command)}.
+    {request_url(Host, Port), command_to_string(Command)}.
 
 %% @private
 build_request(Host, Port, Id, Command) ->
@@ -140,7 +153,7 @@ build_request(Host, Port, Id, Command) ->
 
 %% @private
 command_to_string({Command, Parameters}) when is_atom(Command), 
-                                               is_list(Parameters)->
+					      is_list(Parameters)->
     Build_parameter = fun(X, {Index,Acc}) ->
                               {Index+1,
                                Acc ++ "&" ++ integer_to_list(Index)
@@ -157,12 +170,11 @@ server_url(Host, Port) when is_integer(Port) ->
     Port_value = integer_to_list(Port),
     "http://" ++ Host ++ ":" ++ Port_value ++ Driver_url.
 
-send_request({Url, Body}) ->
+send_request({Url, Body}, HTTP_options) ->
     Content_type = "application/x-www-form-urlencoded; charset=utf-8",
     Request = {Url, [], Content_type, Body},
-    Result = http:request(post, Request, [], []),
-    {ok, {{_,200,_}, _, Response}} = Result,
-    Response.
+    Result = http:request(post, Request, HTTP_options, []),
+    Result.
 
 %% @private
 parse_body(_, "OK") ->
@@ -170,7 +182,7 @@ parse_body(_, "OK") ->
 parse_body(Type, "OK," ++ Rest) ->
     {ok, parse_body_value(Type, Rest)};
 parse_body(_, X) ->
-    {failed, X}.
+    {error, X}.
 
 parse_body_value(Type, [$-|T]) ->
     parse_number(Type, T, [$-],number);
@@ -269,9 +281,13 @@ normalize_session_id(SessionId) when is_list(SessionId) ->
 normalize_session_id(SessionId) ->
     integer_to_list(SessionId).
 
-result_as_array(Result) ->
-    parse_body(array, Result).
+result_as_array({error, _} = Error) ->
+    Error;
+result_as_array({ok, {{_,200,_}, _, Response}}) ->
+    parse_body(array, Response).
 
-result_as_standard(Result) ->
-    parse_body(standard, Result).
+result_as_standard({error, _} = Error) ->
+    Error;
+result_as_standard({ok, {{_,200,_}, _, Response}}) ->
+    parse_body(standard, Response).
 

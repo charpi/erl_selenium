@@ -17,6 +17,7 @@
 
 all_test_() ->
     [{inparallel, 2, [{timeout, 60, fun start_session/0},
+		      {timeout, 60, fun session_with_timeout/0},
 		      {timeout, 60, fun high_level/0}]}].
 
 fast_test_() ->
@@ -153,7 +154,7 @@ parse_body_test () ->
                    {Input,Expected} = {Input,selenium:parse_body (standard, Input)}
            end,
     lists:map (Test,
-               [{{failed,"toto"},"toto"},
+               [{{error,"toto"},"toto"},
                 {{ok,none},"OK"},
                 {{ok,[]},"OK,"},
                 {{ok,1} ,"OK,01"},
@@ -176,7 +177,6 @@ parse_body_test () ->
 
 start_session () ->
     URL = "http://localhost:4444",
-    io:format("Test~n"),
     Session = selenium: start (?HOST,
                                ?PORT,
                                ?COMMAND,
@@ -184,6 +184,17 @@ start_session () ->
     selenium: stop (Session),
     ok.
 
+session_with_timeout () ->
+    URL = "http://localhost:4444",
+    HTTP_options = [{timeout, 1}],
+
+    Session = selenium: start (?HOST, ?PORT, ?COMMAND, URL),
+    Session_with_timeout = selenium: set_options (Session, HTTP_options),
+    Start_url = "/selenium-server/tests/html/test_click_page1.html",
+    {error, timeout} = selenium:cmd (Session_with_timeout, open, [Start_url]),
+    selenium: stop (Session_with_timeout),
+    ok.
+    
 high_level () ->
     Config = selenium_config (),
     Commands = commands (),
