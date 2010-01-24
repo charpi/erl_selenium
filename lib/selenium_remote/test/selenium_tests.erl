@@ -16,9 +16,9 @@
 -export([i18n_test /1]).
 
 all_test_() ->
-    [{inparallel, 2, [{timeout, 60, fun start_session/0},
-		      {timeout, 60, fun session_with_timeout/0},
-		      {timeout, 60, fun high_level/0}]}].
+    [{timeout, 60, fun start_session/0},
+     {timeout, 60, fun session_with_timeout/0},
+     {timeout, 60, fun high_level/0}].
 
 fast_test_() ->
     test_generator: start_stop(?MODULE).
