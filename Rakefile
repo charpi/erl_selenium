@@ -2,7 +2,7 @@
 require 'rake'
 
 task :start_server do
-  sh "java -jar lib/selenium_remote/priv/selenium-server-1.0.jar -log /tmp/selenium_server.log > /dev/null 2>& 1 &\
+  sh "java -jar lib/selenium_remote/priv/selenium-server-1.0.1.jar -log /tmp/selenium_server.log > /dev/null 2>& 1 &\
       echo $! > /tmp/selenium_server.pid;"
 end
 
@@ -25,7 +25,7 @@ task :deliver => [] do
   version=`svnversion -n`
   export_directory="/tmp/selenium"
   sh "rm -fr #{export_directory}; svn export . #{export_directory}"
-  sh "tar -czv -f selenium_#{version}.tgz -C  /tmp selenium"
+  sh "tar -czv -f selenium_src_#{version}.tgz -C  /tmp selenium"
 end
 
 task :default => :selenium_build
