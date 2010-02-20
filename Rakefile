@@ -22,10 +22,8 @@ task :doc => ["erlang:edoc"] do
 end
 
 task :deliver => [] do
-  version=`svnversion -n`
-  export_directory="/tmp/selenium"
-  sh "rm -fr #{export_directory}; svn export . #{export_directory}"
-  sh "tar -czv -f selenium_src_#{version}.tgz -C  /tmp selenium"
+  version = `git rev-list HEAD | wc -l`.strip
+  sh "git archive master | bzip2 > selenium_src_#{version}.tar.bz2"
 end
 
 task :default => :selenium_build
