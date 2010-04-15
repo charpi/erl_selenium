@@ -4,5 +4,5 @@
   {vsn, %VSN%},
   {modules, [selenium_session, selenium_api, %MODULES%]},
   {registered, []},
-  {applications, [kernel, stdlib, inets]}
+  {applications, [kernel, stdlib, inets, compiler, xmerl]}
  ]}.

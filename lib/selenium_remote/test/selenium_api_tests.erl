@@ -71,14 +71,21 @@ utf8_test (Session) ->
     selenium_api: open (Session, Start_url),
     selenium_api: wait_for_page_to_load(Session, "5000"),
     Object = "normal_text",
-    String = [85,110,105,99,111,100,101,32479,19968,30721],
-    Test = fun(Text) ->
-		   selenium_api: type (Session, Object, Text),
-		   {ok, Text} = selenium_api: get_value (Session,Object)
-	   end,
-    Inputs = ["foo", xmerl_ucs: to_utf8 (String)],
-    lists: foreach (Test, Inputs),
+    Swedish = "Företag",
+    String = [32479,19968,30721],
+    Unicode = {unicode, binary_to_list(unicode:characters_to_binary(String))},
+    Inputs = ["foo", Swedish, Unicode],
+    F = fun(T) -> assert_set_value(T, Session, Object) end,
+    lists: foreach (F, Inputs),
     ok.
+
+assert_set_value({Encoding, Text}, Session, Object) ->
+    selenium: cmd (Session, type, [Object, Text]),
+    Unicode = binary_to_list(unicode:characters_to_binary(Text, Encoding, utf8)),
+    {ok, Result} = selenium_api: get_value(Session, Object),
+    {Text, Unicode} = {Text, Result};
+assert_set_value(Text, Session, Object) ->
+    assert_set_value({latin1, Text}, Session, Object).
 
 i18n_test (Session) ->
     Start_url = "/selenium-server/tests/html/test_i18n.html",
@@ -92,7 +99,7 @@ i18n_test (Session) ->
 
     Test = fun({Id,Data}) ->
 		   UTF8 = xmerl_ucs:to_utf8(Data),
-		   Result = selenium_api: is_text_present (Session, UTF8),
+		   Result = selenium_api: is_text_present (Session, {unicode,UTF8}),
 		   {ok, "true"} = Result,
 		   {ok, UTF8} = selenium_api: get_text (Session, Id)
 	   end,

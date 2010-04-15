@@ -157,7 +157,7 @@ command_to_string({Command, Parameters}) when is_atom(Command),
     Build_parameter = fun(X, {Index,Acc}) ->
                               {Index+1,
                                Acc ++ "&" ++ integer_to_list(Index)
-                               ++ "=" ++ encode_url_params(X)}
+                               ++ "=" ++ encode_url_params(to_utf8(X))}
                       end,
     {_, ParamsString} = lists:foldl(Build_parameter, {1,""}, Parameters),
     "cmd="++ atom_to_list(Command) ++ ParamsString.
@@ -177,6 +177,13 @@ send_request({Url, Body}, HTTP_options) ->
     Result.
 
 %% @private
+to_utf8({unicode, Value}) ->
+    Value;
+to_utf8(Value) ->
+    Bin = list_to_binary(Value),
+    {Encoding,_} = unicode:bom_to_encoding(Bin),
+    binary_to_list(unicode:characters_to_binary(Bin, Encoding, unicode)).
+
 parse_body(_, "OK") ->
     {ok, none};
 parse_body(Type, "OK," ++ Rest) ->
