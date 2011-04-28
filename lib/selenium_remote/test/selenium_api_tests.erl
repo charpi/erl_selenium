@@ -36,10 +36,12 @@ default_server_test (Session) ->
 
 google_test (Session) ->
     selenium_api: open (Session, "http://www.google.com/webhp"),
+    selenium_api: wait_for_page_to_load (Session, "10000"),
     selenium_api: type (Session, "q", "hello world"),
+    selenium_api: wait_for_page_to_load (Session, "10000"),
     selenium_api: click (Session, "btnG"),
-    selenium_api: wait_for_page_to_load (Session, "5000"),
-    {ok,"hello world - Google Search"} = selenium_api: get_title (Session),
+    selenium_api: wait_for_page_to_load (Session, "10000"),
+    {ok,"hello world" ++ _} = selenium_api: get_title (Session),
     ok.
 
 keypress_test (Session) ->

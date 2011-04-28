@@ -41,10 +41,12 @@ default_server_test (Session) ->
 
 google_test (Session) ->
     selenium: cmd (Session, open, ["http://www.google.com/webhp"]),
+    selenium: cmd (Session, waitForPageToLoad, ["10000"]),
     selenium: cmd (Session, type, ["q", "hello world"]),
+    selenium: cmd (Session, waitForPageToLoad, ["10000"]),
     selenium: cmd (Session, click, ["btnG"]),
-    selenium: cmd (Session, waitForPageToLoad, ["5000"]),
-    {ok,"hello world - Google Search"} = selenium: cmd (Session, getTitle),
+    selenium: cmd (Session, waitForPageToLoad, ["10000"]),
+    {ok,"hello world - " ++ _} = selenium: cmd (Session, getTitle),
     ok.
 
 keypress_test (Session) ->

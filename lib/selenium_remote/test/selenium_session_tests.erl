@@ -36,10 +36,12 @@ default_server_test (Session) ->
 
 google_test (Session) ->
     Session: open ( "http://www.google.com/webhp"),
+    Session: wait_for_page_to_load ( "10000"),
     Session: type ( "q", "hello world"),
+    Session: wait_for_page_to_load ( "10000"),
     Session: click ( "btnG"),
-    Session: wait_for_page_to_load ( "5000"),
-    {ok,"hello world - Google Search"} = Session: get_title (),
+    Session: wait_for_page_to_load ( "10000"),
+    {ok,"hello world" ++ _} = Session: get_title (),
     ok.
 
 keypress_test (Session) ->

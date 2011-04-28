@@ -32,12 +32,14 @@ close_session (Session) ->
     Session: stop_session ().
 
 fast_tests (Module) ->
-    Tests = [default_server_test,
+    Tests = [
+	     default_server_test,
 	     i18n_test,
 	     utf8_test,
 	     type_very_long_text_test,
 	     keypress_test,
-	     google_test],
+	     google_test
+	    ],
     fun (X) ->
 	    [{timeout, 60, fun() -> Module:T(X) end} || T <- Tests]
     end.

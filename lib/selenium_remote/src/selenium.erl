@@ -1,9 +1,9 @@
-%%% Copyright(c) 2007-2009 Nicolas Charpentier
+%%% Copyright(c) 2007-2011 Nicolas Charpentier
 %%% All rights reserved.
 %%% See file $TOP_DIR/COPYING.
 
 %% @author Nicolas Charpentier <open_source@charpi.net> [http://charpi.net]
-%% @copyright 2007-2009 Nicolas Charpentier
+%% @copyright 2007-2011 Nicolas Charpentier
 
 -module(selenium).
 
@@ -21,17 +21,23 @@
 -export([command_to_string/1]).
 
 -type(selenium_session() :: {string(), integer(), any(), [term()]}).
--type(selenium_command_result() :: {ok, none | [any()] |  number()} | {error, any()}).
+-type(selenium_command_result() :: {ok, none | 
+				    [any()] | 
+				    number()} | 
+				   {error, any()}).
 -type(module_instance() :: any()).
 
 %% @doc Set HTTP options that will be used for each commands.
 -spec(set_options(selenium_session(), [term()]) -> selenium_session()).
-set_options ({H, P, Id, _ }, Options) when is_list(Options), is_list(H), is_integer(P) ->
+set_options ({H, P, Id, _ }, Options) 
+	    when is_list(Options), 
+	    	 is_list(H), 
+	    	 is_integer(P) ->
     {H, P , Id, Options}.
 
 %% @doc Starts a selenium session which can be used with cmd/3 and cmd_array/3
 %% functions.
--spec(start(Host :: string(), integer(), string(), string()) -> selenium_session()).
+-spec(start(string(), integer(), string(), string()) -> selenium_session()).
 start(Host, Port, Command, URL) ->
     start(Host, Port, Command, URL, []).
 
@@ -173,7 +179,7 @@ server_url(Host, Port) when is_integer(Port) ->
 send_request({Url, Body}, HTTP_options) ->
     Content_type = "application/x-www-form-urlencoded; charset=utf-8",
     Request = {Url, [], Content_type, Body},
-    Result = http:request(post, Request, HTTP_options, []),
+    Result = httpc:request(post, Request, HTTP_options, []),
     Result.
 
 %% @private
@@ -297,4 +303,3 @@ result_as_standard({error, _} = Error) ->
     Error;
 result_as_standard({ok, {{_,200,_}, _, Response}}) ->
     parse_body(standard, Response).
-
