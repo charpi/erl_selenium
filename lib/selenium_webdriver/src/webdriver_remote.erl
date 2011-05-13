@@ -25,6 +25,8 @@
 -export([refresh/1]).
 -export([execute/2]).
 -export([screenshot/1]).
+-export([available_engines/1]).
+-export([active_engine/1]).
 
 -define(CONTENT_TYPE,"application/json;charset=UTF-8").
 
@@ -94,6 +96,13 @@ execute(Session, Script) ->
 
 screenshot(Session) ->
    request(get, path(Session, "screenshot"), []).
+
+available_engines(Session) ->
+    request(get, path(Session, "ime/available_engines"), []).
+
+active_engine(Session) ->
+    request(get, path(Session, "ime/active_engine"), []).
+
 
 post(Path,Body) ->
     request(post, Path, Body).

@@ -18,11 +18,10 @@ run_validation() {
     status $?
 }
 
-rake start_server 1> /dev/null 2>&1 
-
+rake start_test_server 1> /dev/null 2>&1 
+sleep 1
 rm /tmp/selenium_validation.log
 
-run_validation /usr/local/lib/erlang-R12B-5
-run_validation /usr/local/lib/erlang-R13B-4
+run_validation /usr/local/lib/erlang
 
-rake stop_server 1> /dev/null 2>&1
+rake stop_test_server 1> /dev/null 2>&1

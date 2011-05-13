@@ -5,4 +5,4 @@ EMAKE_COMPILE_OPTIONS = ["{d, 'HOST', \"localhost\"}",
                          "{d, 'COMMAND', \"*firefox\"}"]
 ERLC_FLAGS = "+warn_unused_vars +warn_unused_import"
 ERL_FLAGS = "-sname test"
-CHECK_APP= true
+CHECK_APP= false
