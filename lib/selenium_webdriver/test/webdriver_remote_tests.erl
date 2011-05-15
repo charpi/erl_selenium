@@ -14,6 +14,18 @@
 -export([screenshot/2]).
 -export([engines/2]).
 -export([active_engine/2]).
+-export([frame/2]).
+-export([frame_by_index/2]).
+-export([invalid_frame/2]).
+-export([default_frame/2]).
+-export([window/2]).
+-export([delete_window/2]).
+-export([find_element_by_xpath/2]).
+-export([element_not_found_by_xpath/2]).
+-export([elements_by_xpath/2]).
+-export([get_attribute/2]).
+-export([get_implicit_attribute/2]).
+-export([speed/2]).
 
 session_test_() ->
      Tests = [fun correct_session/0,
@@ -33,12 +45,29 @@ session_test_() ->
 
 
 complete_api_test_() ->
-    Browsers = [firefox, htmlunit],
+    Browsers = ?WEBDRIVER_BROWSER,
     [{setup,
       fun() -> setup_session(B) end, 
       fun close_session/1,
       api_tests(B)} || B <- Browsers].
 
+isolated_api_test_() ->
+    Browsers = ?WEBDRIVER_BROWSER,
+    [{foreach,
+      fun() -> setup_session(B) end, 
+      fun close_session/1,
+      [isolated_tests(B)] } || B <- Browsers].
+
+isolated_tests(Browser) ->
+    Tests = [	     window,
+		     delete_window],
+    fun(X) ->
+	    [{timeout, 120, 
+	      {lists:flatten(io_lib:format("~s with ~s",[T,Browser])), fun() -> ?MODULE:T(Browser,X) end } 
+	     } || T <- Tests]
+    end.
+    
+		     
 api_tests(Browser) ->
     Tests = [
 	     session_capabilities,
@@ -52,7 +81,17 @@ api_tests(Browser) ->
 	     execute,
 	     screenshot,
 	     engines,
-	     active_engine
+	     active_engine,
+	     frame,
+	     frame_by_index,
+	     invalid_frame,
+	     default_frame,
+	     find_element_by_xpath,
+	     element_not_found_by_xpath,
+	     elements_by_xpath,
+	     get_attribute,
+	     get_implicit_attribute,
+	     speed
 	    ],
     fun(X) ->
 	    [{timeout, 120, 
@@ -114,9 +153,9 @@ back_forward(_, Session) ->
     ?assertEqual({ok, URL_2}, webdriver_remote:get_current_url(Session)),
     ok.
     
-execute(_, Session) ->
+execute(Browser, Session) ->
     {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "xhtmlTest")),
-    timer:sleep(10000),
+    sleep(Browser),
     Expected = {ok, <<"XHTML Test Page">>},
     Result = webdriver_remote:execute(Session, "return document.title;"),
     assert_command("execute", Expected, Result),
@@ -143,6 +182,112 @@ active_engine(htmlunit, Session) ->
     {error, {13,_}} = webdriver_remote:available_engines(Session).
 
 
+frame(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "frameset")),
+    sleep(Browser),
+    {ok, no_content} = webdriver_remote:frame(Session, "third"),
+    ok.
+
+frame_by_index(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "frameset")),
+    sleep(Browser),
+    {ok, no_content} = webdriver_remote:frame(Session, 3),
+    ok.
+
+invalid_frame(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "frameset")),
+    sleep(Browser),
+    {error, {8,_}} = webdriver_remote:frame(Session, "invalid_frame_name"),
+    ok.
+
+default_frame(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "frameset")),
+    sleep(Browser),
+    {ok, no_content} = webdriver_remote:frame(Session, null),
+    ok.
+
+window(Browser, Session) ->
+    Title1 = <<"XHTML Test Page">>,
+    Title2 = <<"We Arrive Here">>,
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "xhtmlTest")),
+    sleep(Browser),
+    {ok, [Element]} = webdriver_remote:find_elements(Session, <<"link text">>, "Open new window"),
+    {ok, no_content} = webdriver_remote:click(Session, Element),
+    {ok, Title1} = webdriver_remote:title(Session),
+    {ok, no_content} = webdriver_remote:switch_to_window(Session, "result"),
+    {ok, Title2} = webdriver_remote:title(Session),
+    ok.
+
+delete_window(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "xhtmlTest")),
+    sleep(Browser),
+    {ok, [Element]} = webdriver_remote:find_elements(Session, <<"link text">>, "Open new window"),
+    {ok, no_content} = webdriver_remote:click(Session, Element),
+    {ok, no_content} = webdriver_remote:switch_to_window(Session, "result"),
+    {ok, Title1} = webdriver_remote:title(Session),
+    {ok, no_content} = webdriver_remote:switch_to_window(Session, "result"),
+    {ok, _} = webdriver_remote:title(Session),
+    {ok, no_content} = webdriver_remote:delete_window(Session),
+    {ok, Title1} = webdriver_remote:title(Session),
+    ok.
+
+find_element_by_xpath(_, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "simpleTest")),
+    timer:sleep(10000),
+    {ok, [Id]} = webdriver_remote:find_elements(Session, xpath, "//h1"),
+    {ok, <<"Heading">>} = webdriver_remote:text(Session, Id),
+    ok.
+
+element_not_found_by_xpath(_, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "simpleTest")),
+    timer:sleep(10000),
+    {error, {7,_}} = webdriver_remote:find_elements(Session, xpath, "//h4"),
+    ok.
+
+elements_by_xpath(htmlunit, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "nestedElements")),
+    sleep(htmlunit),
+    {ok, Elements} = webdriver_remote:find_elements(Session, xpath, "//option"),
+    {48,Elements} = {length(Elements), Elements},
+    {ok , null} = webdriver_remote:get_attribute(Session, hd(Elements), "value");
+elements_by_xpath(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "nestedElements")),
+    sleep(Browser),
+    {ok, Elements} = webdriver_remote:find_elements(Session, xpath, "//option"),
+    {48,Elements} = {length(Elements), Elements},
+    {ok , <<"One">>} = webdriver_remote:get_attribute(Session, hd(Elements), "value").
+
+
+get_attribute(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "xhtmlTest")),
+    sleep(Browser),
+    {ok, [Element|_]} = webdriver_remote:find_elements(Session, id, "id1"),
+    %% WTF
+    %% {_Host, Port, _} = Session,
+    %% Expected = "http://localhost:" ++ integer_to_list(Port) ++ "/xhtmlTest.html#",
+    Expected = list_to_binary("#"),
+    {ok, Expected} = webdriver_remote:get_attribute(Session, Element, "href").
+
+get_implicit_attribute(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "nestedElements")),
+    sleep(Browser),
+    {ok, [A,B,C,D|_]} = webdriver_remote:find_elements(Session, xpath, "//option"),
+    Tmp = [webdriver_remote:get_attribute(Session, Element, "index") || Element <- [A,B,C,D]],
+    {_,Indexes} = lists:unzip(Tmp),
+    RefIndexes = lists:seq(0,3),
+    [X=list_to_binary(integer_to_list(Z)) || {X,Z} <- lists:zip(Indexes, RefIndexes)].
+    
+speed(_Browser, Session) ->
+%%     {?LINE,{ok, 'SLOW'}} = {?LINE,webdriver_remote:speed(Session)},
+%%     {?LINE,{ok, no_content}} = {?LINE,webdriver_remote:speed(Session, 'SLOW')},
+%%     {?LINE,{ok, 'SLOW'}} = {?LINE,webdriver_remote:speed(Session)},
+%%     {?LINE,{ok, no_content}} = {?LINE,webdriver_remote:speed(Session, 'MEDIUM')},
+%%     {?LINE,{ok, 'MEDIUM'}} = {?LINE,webdriver_remote:speed(Session)},
+%%     {?LINE,{ok, no_content}} = {?LINE,webdriver_remote:speed(Session, 'FAST')},
+%%     {?LINE,{ok, 'FAST'}} = {?LINE,webdriver_remote:speed(Session)},
+    {error, []} = webdriver_remote:speed(Session),
+    {error, []} = webdriver_remote:speed(Session, 'FAST'),
+    ok.
 
 correct_session() ->
     {ok, Session} = webdriver_remote:session(?HOST,?PORT,[{browserName, firefox}]),
@@ -188,3 +333,9 @@ assert_command(Name, Expected, Result) ->
 	    exit(E);
 	X -> X
     end.
+
+
+sleep(htmlunit) ->
+    ok;
+sleep(_) ->
+    timer:sleep(5000).
