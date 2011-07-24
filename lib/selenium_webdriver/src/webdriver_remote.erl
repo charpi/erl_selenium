@@ -39,6 +39,10 @@
 -export([delete_window/1]).
 -export([speed/1]).
 -export([speed/2]).
+-export([cookies/1]).
+-export([add_cookie/4]).
+-export([delete_cookie/2]).
+-export([delete_cookies/1]).
 
 -define(CONTENT_TYPE,"application/json;charset=UTF-8").
 
@@ -183,6 +187,30 @@ speed(Session) ->
 -spec(speed(abstract_session(), 'SLOW' | 'MEDIUM' | 'FAST') -> command_result()).
 speed(Session, Speed) ->
     post(path(Session,"speed"), to_json([{<<"speed">>,Speed}])).
+
+-spec(cookies(abstract_session()) -> command_result()).
+cookies(Session) ->
+    request(get, path(Session, "cookie"), []).
+
+-type(cookie_options() :: {path, binary()} |
+			  {domain, binary()} |
+			  {secure, true|false} |
+			  {expiry, integer()}).
+-spec(add_cookie(abstract_session(), binary(), binary(), [cookie_options()]) ->
+	     command_result()).
+add_cookie(Session, Name, Value, Options) ->
+    Body = [{"name", Name},
+	    {"value", Value} | Options],
+    request(post, path(Session, "cookie"), to_json([{cookie,{struct, Body}}])).
+		    
+
+-spec(delete_cookie(abstract_session(), binary()) ->
+	     command_result()).
+delete_cookie(Session, Name) ->
+    request(delete, path(Session, "cookie/" ++ binary_to_list(Name)), []).
+
+delete_cookies(Session) ->
+    request(delete, path(Session, "cookie"), []).
 
 webelement_id({struct, [{<<"ELEMENT">>, Id}]}) ->
     Id.

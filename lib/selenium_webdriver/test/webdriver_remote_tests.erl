@@ -26,6 +26,8 @@
 -export([get_attribute/2]).
 -export([get_implicit_attribute/2]).
 -export([speed/2]).
+-export([cookies/2]).
+-export([add_cookie/2]).
 
 session_test_() ->
      Tests = [fun correct_session/0,
@@ -36,12 +38,12 @@ session_test_() ->
  	    ],
      [{timeout, 60, [T]} || T <- Tests].
 
-%% api_test_() ->
-%%     Default_browser = firefox,
-%%     [{setup,
-%%       fun() -> setup_session(Default_browser) end,
-%%       fun close_session/1,
-%%       api_tests(Default_browser)}].
+%%  api_test_() ->
+%%      Default_browser = firefox,
+%%      [{setup,
+%%        fun() -> setup_session(Default_browser) end,
+%%        fun close_session/1,
+%%        api_tests(Default_browser)}].
 
 
 complete_api_test_() ->
@@ -69,7 +71,8 @@ isolated_tests(Browser) ->
     
 		     
 api_tests(Browser) ->
-    Tests = [session_capabilities,
+    Tests = [
+	     session_capabilities,
  	     invalid_uri_navigate,
  	     navigate,
  	     async_script,
@@ -90,7 +93,9 @@ api_tests(Browser) ->
 	     elements_by_xpath,
 	     get_attribute,
 	     get_implicit_attribute,
-	     speed
+	     speed,
+	     add_cookie,
+	     cookies
 	    ],
     fun(X) ->
 	    [{timeout, 120, 
@@ -285,6 +290,33 @@ speed(_Browser, Session) ->
     {error, []} = webdriver_remote:speed(Session),
     {error, []} = webdriver_remote:speed(Session, 'FAST'),
     ok.
+
+cookies(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "nestedElements")),
+    sleep(Browser),
+    {ok, Before} = webdriver_remote:cookies(Session),
+    Cookies = [{<<"a">>, <<"v1">>},
+	       {<<"b">>, <<"v2">>}
+	      ],
+    Options = [{domain, <<"charpi.net">>},
+	       {path, <<"/">>},
+	       {secure, false}],
+    [{ok, no_content} = webdriver_remote:add_cookie(Session, N, V, Options) || {N,V} <- Cookies],
+    {ok, After} = webdriver_remote:cookies(Session),
+    ?assertEqual(length(Before) + 2 , length(After)),
+    [{ok, no_content} = webdriver_remote:delete_cookie(Session, N) || {N,_} <- Cookies],
+    {ok, Before} = webdriver_remote:cookies(Session),
+
+    {ok, no_content} = webdriver_remote:delete_cookies(Session),
+    {ok, []} = webdriver_remote:cookies(Session),
+    ok.
+
+add_cookie(Browser, Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "nestedElements")),
+    Options = [{domain, <<"charpi.net">>},
+	       {path, <<"/">>},
+	       {secure, false}],
+    {ok, no_content} = webdriver_remote:add_cookie(Session, <<"test">>, <<"value">>, Options).
 
 correct_session() ->
     {ok, Session} = webdriver_remote:session(?HOST,?PORT,[{browserName, firefox}]),
