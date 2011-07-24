@@ -28,6 +28,7 @@
 -export([speed/2]).
 -export([cookies/2]).
 -export([add_cookie/2]).
+-export([source/2]).
 
 session_test_() ->
      Tests = [fun correct_session/0,
@@ -95,7 +96,8 @@ api_tests(Browser) ->
 	     get_implicit_attribute,
 	     speed,
 	     add_cookie,
-	     cookies
+	     cookies,
+	     source
 	    ],
     fun(X) ->
 	    [{timeout, 120, 
@@ -311,13 +313,18 @@ cookies(Browser, Session) ->
     {ok, []} = webdriver_remote:cookies(Session),
     ok.
 
-add_cookie(Browser, Session) ->
+add_cookie(_Browser, Session) ->
     {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "nestedElements")),
     Options = [{domain, <<"charpi.net">>},
 	       {path, <<"/">>},
 	       {secure, false}],
     {ok, no_content} = webdriver_remote:add_cookie(Session, <<"test">>, <<"value">>, Options).
 
+source(_,Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "nestedElements")),
+    {ok, Bin} = webdriver_remote:source(Session),
+    true = is_binary(Bin),
+    ok.
 correct_session() ->
     {ok, Session} = webdriver_remote:session(?HOST,?PORT,[{browserName, firefox}]),
     {?HOST, ?PORT, Id} = Session,

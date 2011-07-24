@@ -43,6 +43,7 @@
 -export([add_cookie/4]).
 -export([delete_cookie/2]).
 -export([delete_cookies/1]).
+-export([source/1]).
 
 -define(CONTENT_TYPE,"application/json;charset=UTF-8").
 
@@ -211,6 +212,9 @@ delete_cookie(Session, Name) ->
 
 delete_cookies(Session) ->
     request(delete, path(Session, "cookie"), []).
+
+source(Session) ->
+    request(get, path(Session, "source"), []).
 
 webelement_id({struct, [{<<"ELEMENT">>, Id}]}) ->
     Id.
