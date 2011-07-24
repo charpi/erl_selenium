@@ -150,8 +150,7 @@ find_elements(Session, Using, Value) ->
 get_attribute(Session, Id, Value) when is_binary(Id) ->
     get_attribute(Session, binary_to_list(Id), Value);
 get_attribute(Session, Id, Value) ->
-    request(get, path(Session, "element/" ++ Id ++ "/attribute/" ++ Value),
-	    []).
+    request(get, path(Session, "element/" ++ Id ++ "/attribute/" ++ Value), []).
 
 
 click(Session, Id) when is_binary(Id) ->

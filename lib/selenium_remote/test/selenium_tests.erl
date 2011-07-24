@@ -24,7 +24,7 @@ fast_test_() ->
     test_generator: start_stop(?MODULE).
 
 default_server_test (Session) ->
-    Start_url = "/selenium-server/tests/html/test_click_page1.html",
+    Start_url = "http://charpi.net/erl_selenium_test/tests/html/test_click_page1.html",
     selenium:cmd (Session, open, [Start_url]),
     {ok, "Click here for next page" ++ _Rest} = selenium: cmd (Session, getText,
                                                                ["link"]),
@@ -52,7 +52,7 @@ google_test (Session) ->
 keypress_test (Session) ->
     InputId = "ac4",
     UpdateId = "ac4update",
-    Ajax_url = "http://localhost:4444/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
+    Ajax_url = "http://charpi.net/erl_selenium_test/tests/html/ajax/ajax_autocompleter2_test.html",
     selenium: cmd (Session, open, [Ajax_url]),
     selenium: cmd (Session, keyPress, [InputId, "74"]),
     receive after 500 -> ok end,
@@ -66,7 +66,7 @@ keypress_test (Session) ->
     ok.
 
 type_very_long_text_test (Session) ->
-    Start_url = "/selenium-server/tests/html/test_rich_text.html",
+    Start_url = "http://charpi.net/erl_selenium_test/tests/html/test_rich_text.html",
     LongText = lists:duplicate (50000, $z), 
     selenium: cmd (Session, open, [Start_url]),
     selenium: cmd (Session, type, ["richtext", LongText]),
@@ -74,7 +74,7 @@ type_very_long_text_test (Session) ->
     ok.
 
 utf8_test (Session) ->    
-    Start_url = "/selenium-server/tests/html/test_editable.html",
+    Start_url = "http://charpi.net/erl_selenium_test/tests/html/test_editable.html",
     selenium: cmd (Session, open, [Start_url]),
     selenium: cmd (Session, waitForPageToLoad, []),
     Object = "normal_text",
@@ -95,7 +95,7 @@ assert_set_value(Text, Session, Object) ->
     assert_set_value({latin1, Text}, Session, Object).
 
 i18n_test (Session) ->
-    Start_url = "/selenium-server/tests/html/test_i18n.html",
+    Start_url = "http://charpi.net/erl_selenium_test/tests/html/test_i18n.html",
     selenium: cmd (Session, open, [Start_url]),
     Datas = [
 	     {"romance", [252,246,228,220,214,196,32,231,232,233,32,191,241,32,232,224,249,242]},
@@ -199,7 +199,7 @@ session_with_timeout () ->
 
     Session = selenium: start (?HOST, ?PORT, ?COMMAND, URL),
     Session_with_timeout = selenium: set_options (Session, HTTP_options),
-    Start_url = "/selenium-server/tests/html/test_click_page1.html",
+    Start_url = "http://charpi.net/erl_selenium_test/tests/html/test_click_page1.html",
     {error, timeout} = selenium:cmd (Session_with_timeout, open, [Start_url]),
     selenium: stop (Session_with_timeout),
     ok.
@@ -208,7 +208,7 @@ high_level () ->
     Config = selenium_config (),
     Commands = commands (),
     Results = selenium: run (Config, Commands),
-    URL = "/selenium-server/tests/html/test_click_page1.html",
+    URL = "http://charpi.net/erl_selenium_test/tests/html/test_click_page1.html",
     [{{open, [URL]},{not_tested, {ok, none}}},
      {{getText, ["link"], _}, {ok, "OK"}},
      {{{array, getAllLinks}, [], _}, {ok, "OK"}},
@@ -223,7 +223,7 @@ commands () ->
      wait_for_page_to_load ()].
 
 open () ->
-    {open, ["/selenium-server/tests/html/test_click_page1.html"]}.
+    {open, ["http://charpi.net/erl_selenium_test/tests/html/test_click_page1.html"]}.
 
 get_text () ->
     {getText, ["link"], fun(X) -> "Click here for next page" ++ _Rest = X end}.
@@ -239,7 +239,7 @@ wait_for_page_to_load () ->
     {waitForPageToLoad, ["5000"]}.
 
 selenium_config () ->
-    URL = "http://localhost:4444",
+    URL = "http://charpi.net/erl_selenium_test",
     [{server, {?HOST, ?PORT}},
      {browser, ?COMMAND},
      {url, URL}].

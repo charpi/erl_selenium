@@ -2,12 +2,12 @@
 require 'rake'
 
 task :start_test_server do
-  sh "java -jar lib/selenium_remote/priv/server-with-tests-standalone.jar -browserSessionReuse -log /tmp/selenium_server.log -debug > /dev/null 2>& 1 &\
+  sh "cd lib/selenium_remote/priv; java -jar selenium-server-standalone-2.1.0.jar -browserSessionReuse -log /tmp/selenium_server.log -debug > /dev/null 2>& 1 &\
       echo $! > /tmp/selenium_server.pid;"
 end
 
 task :start_server do
-  sh "java -jar lib/selenium_remote/priv/selenium-server-standalone-2.0b3.jar -browserSessionReuse -log /tmp/selenium_server.log > /dev/null 2>& 1 &\
+  sh "java -jar lib/selenium_remote/priv/selenium-server-standalone-2.1.0.jar -browserSessionReuse -log /tmp/selenium_server.log > /dev/null 2>& 1 &\
       echo $! > /tmp/selenium_server.pid;"
 end
 

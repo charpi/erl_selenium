@@ -19,7 +19,7 @@ start_session () ->
     selenium: start (?HOST, ?PORT, ?COMMAND, ?URL).
 
 stop_session (Session) ->
-    selenium: stop (Session).
+    application:stop(inets).
 
 launch_close(Module) ->
     [{setup, fun launch_session/0, fun close_session/1, 

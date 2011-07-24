@@ -19,7 +19,7 @@ fast_test_() ->
     test_generator: launch_close (?MODULE).
 
 default_server_test (Session) ->
-    Start_url = "/selenium-server/tests/html/test_click_page1.html",
+    Start_url = "http://charpi.net/erl_selenium_test/tests/html/test_click_page1.html",
     Session: open (Start_url),
     
     {ok, "Click here for next page" ++ _Rest} = Session: get_text ("link"),
@@ -47,7 +47,7 @@ google_test (Session) ->
 keypress_test (Session) ->
     InputId = "ac4",
     UpdateId = "ac4update",
-    Ajax_url = "http://localhost:4444/selenium-server/tests/html/ajax/ajax_autocompleter2_test.html",
+    Ajax_url = "http://charpi.net/erl_selenium_test/tests/html/ajax/ajax_autocompleter2_test.html",
     Session: open ( Ajax_url),
     Session: key_press ( InputId, "74"),
     receive after 500 -> ok end,
@@ -62,14 +62,14 @@ keypress_test (Session) ->
 
 type_very_long_text_test (Session) ->
     LongText = lists:duplicate (50000, $z), 
-    Start_url = "/selenium-server/tests/html/test_rich_text.html",
+    Start_url = "http://charpi.net/erl_selenium_test/tests/html/test_rich_text.html",
     Session: open ( Start_url),
     Session: type ( "richtext", LongText),
     {ok, LongText} = Session: get_value ( "richtext"),
     ok.
 
 utf8_test (Session) ->    
-    Start_url = "/selenium-server/tests/html/test_editable.html",
+    Start_url = "http://charpi.net/erl_selenium_test/tests/html/test_editable.html",
     Session: open ( Start_url),
     Session: wait_for_page_to_load ("5000"),
     Object = "normal_text",
@@ -91,7 +91,7 @@ assert_set_value(Text, Session, Object) ->
 
 
 i18n_test (Session) ->
-    Start_url = "/selenium-server/tests/html/test_i18n.html",
+    Start_url = "http://charpi.net/erl_selenium_test/tests/html/test_i18n.html",
     Session: open ( Start_url),
     Datas = [
 	     {"romance", [252,246,228,220,214,196,32,231,232,233,32,191,241,32,232,224,249,242]},
