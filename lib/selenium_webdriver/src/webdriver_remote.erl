@@ -31,8 +31,11 @@
 -export([active_engine/1]).
 -export([frame/2]).
 -export([find_elements/3]).
+-export([find_elements/4]).
 -export([get_attribute/3]).
 -export([click/2]).
+-export([value/2]).
+-export([submit/2]).
 -export([text/2]).
 -export([title/1]).
 -export([switch_to_window/2]).
@@ -44,6 +47,11 @@
 -export([delete_cookie/2]).
 -export([delete_cookies/1]).
 -export([source/1]).
+-export([active_element/1]).
+-export([double_click/1]).
+-export([button_up/1]).
+-export([button_down/1]).
+-export([mouse_click/1, mouse_click/2]).
 
 -define(CONTENT_TYPE,"application/json;charset=UTF-8").
 
@@ -150,6 +158,21 @@ find_elements(Session, Using, Value) ->
 	    Other
     end.
 
+-spec(find_elements(abstract_session(), string(), atom()|binary(), string()) -> command_result()).
+find_elements(Session, Id, Using, Value) ->
+    Res = post(path(Session, "element/"++ Id ++ "/elements"), 
+	       to_json([{<<"using">>, Using},
+			{<<"value">>, list_to_binary(Value)}])),
+    case Res of
+	{ok , []} ->
+	    {error, {7, no_such_element}};
+	{ok, List} ->
+	    {ok, [webelement_id(E) || E <- List] };
+	Other ->
+	    io:format(user,"~p~n",[Other]),
+	    Other
+    end.
+    
 -spec(get_attribute(abstract_session(), string()|binary(), string()) ->
 	     command_result()).
 get_attribute(Session, Id, Value) when is_binary(Id) ->
@@ -163,6 +186,11 @@ click(Session, Id) when is_binary(Id) ->
 click(Session, Id) ->
     post(path(Session, "element/" ++ Id ++ "/click"), " ").
 
+submit(Session, Id) when is_binary(Id) ->
+    submit(Session, binary_to_list(Id));
+submit(Session, Id) ->
+    post(path(Session, "element/" ++ Id ++ "/submit"), " ").
+
 text(Session, Id) when is_binary(Id) ->
     text(Session, binary_to_list(Id));
 text(Session, Id) ->
@@ -170,6 +198,13 @@ text(Session, Id) ->
 
 title(Session) ->
     request(get, path(Session, "title"), []).
+
+-spec(value(abstract_session(), binary()|string()) ->
+	      command_result()).
+value(Session, Id) when is_binary(Id) ->
+    value(Session, binary_to_list(Id));
+value(Session, Id) ->
+    request(get, path(Session, "element/" ++ Id ++ "/value"), []).
 
 -spec(switch_to_window(abstract_session(), string()) ->
 	     command_result()).
@@ -202,7 +237,7 @@ cookies(Session) ->
 add_cookie(Session, Name, Value, Options) ->
     Body = [{"name", Name},
 	    {"value", Value} | Options],
-    request(post, path(Session, "cookie"), to_json([{cookie,{struct, Body}}])).
+    post(path(Session, "cookie"), to_json([{cookie,{struct, Body}}])).
 		    
 
 -spec(delete_cookie(abstract_session(), binary()) ->
@@ -215,6 +250,32 @@ delete_cookies(Session) ->
 
 source(Session) ->
     request(get, path(Session, "source"), []).
+
+active_element(Session) ->
+   post(path(Session, "element/active"), " ").
+
+double_click(Session) ->
+    post(path(Session, "doubleclick"), " ").
+
+button_up(Session) ->
+    post(path(Session, "button_up"), " ").
+
+button_down(Session) ->
+    post(path(Session, "buttondown"), " ").
+
+mouse_click(Session) ->
+    mouse_click(Session, left).
+
+-spec(mouse_click(abstract_session(), left| right| middle) ->
+	     command_result()).
+mouse_click(Session, Button) ->
+    Value = case Button of
+		left -> 0;
+		middle -> 1;
+		right -> 2
+	    end,
+    post(path(Session,"click"), to_json([{<<"button">>, Value}])).		    
+
 
 webelement_id({struct, [{<<"ELEMENT">>, Id}]}) ->
     Id.

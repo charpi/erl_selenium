@@ -29,6 +29,8 @@
 -export([cookies/2]).
 -export([add_cookie/2]).
 -export([source/2]).
+-export([active_element/2]).
+-export([value/2]).
 
 session_test_() ->
      Tests = [fun correct_session/0,
@@ -97,7 +99,9 @@ api_tests(Browser) ->
 	     speed,
 	     add_cookie,
 	     cookies,
-	     source
+	     source,
+	     active_element,
+	     value
 	    ],
     fun(X) ->
 	    [{timeout, 120, 
@@ -325,6 +329,27 @@ source(_,Session) ->
     {ok, Bin} = webdriver_remote:source(Session),
     true = is_binary(Bin),
     ok.
+
+active_element(_,Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "edit_frame")),
+    {ok, Elt} = webdriver_remote:active_element(Session),
+    true = Elt =/= null,
+    ok.
+    
+value(htmlunit,Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "nestedElements")),
+    sleep(htmlunit),
+    {ok, Elements} = webdriver_remote:find_elements(Session, xpath, "//option"),
+    {48,Elements} = {length(Elements), Elements},
+    {ok, <<>>} = webdriver_remote:value(Session, hd(Elements));    
+value(Browser,Session) ->
+    {ok, no_content} = webdriver_remote:get(Session, test_page(Session, "nestedElements")),
+    sleep(Browser),
+    {ok, Elements} = webdriver_remote:find_elements(Session, xpath, "//option"),
+    {48,Elements} = {length(Elements), Elements},
+    {ok, <<"One">>} = 	webdriver_remote:value(Session, hd(Elements)),
+    ok.
+
 correct_session() ->
     {ok, Session} = webdriver_remote:session(?HOST,?PORT,[{browserName, firefox}]),
     {?HOST, ?PORT, Id} = Session,
