@@ -337,7 +337,7 @@ namespace :erlang do
 
   desc "Run erlang unit test for all or a specific application."\
   "(No name given mean all applications)"
-  task :tests, :name, :needs => [:applications] + ERL_BEAM_TESTS do
+  task :tests, [:name] => [:applications] + ERL_BEAM_TESTS do
     |t, args|
     handle_test("test", args)
   end
@@ -345,7 +345,7 @@ namespace :erlang do
 
   desc "Run cover on unit test for all or a specific application."\
   "(No name given mean all applications)"
-  task :cover, :name, :needs => [:applications] + ERL_BEAM_TESTS do
+  task :cover, [:name] => [:applications] + ERL_BEAM_TESTS do
     |t, args|
     handle_test("cover", args)
   end
@@ -365,7 +365,7 @@ namespace :erlang do
   CLEAN.include "lib/*/doc/edoc-info"
 
   desc "Buid Application documentation"
-  task :edoc, :name, :needs => [:applications] do |t,args|
+  task :edoc, [:name] => [:applications] do |t,args|
     names = if args.name
               [args.name]
             else
