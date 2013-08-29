@@ -29,7 +29,7 @@
 api_to_binary (Type, API) ->
     Functions = extract_functions (API),
     {File_name, Forms} = functions_to_module (Type, Functions),
-    {ok, _, Binary} = compile: forms(Forms, [report]),
+    {ok, _, Binary} = compile: forms(Forms, [report,debug_info]),
     {File_name, Binary}.
 
 %% @doc Write a binary module on disk.
@@ -124,21 +124,33 @@ functions_to_module ("session" , Functions) ->
     Fun = fun(Function) -> function_to_session_form(Function) end,
     Forms = lists: map (Fun, Functions),
     {"selenium_session.beam",full_session_forms (Forms)}.
-    
+
+%% Generate an export attribute for all functions in Forms.
+generate_export_all(Line, Forms) ->
+  {attribute, Line, export, generate_export_all2(Forms, [])}.
+
+generate_export_all2([], Exports) ->
+  lists:reverse(Exports);
+generate_export_all2([{function,_Line,Name,Arity,_Repr} | Forms], Exports) ->
+  generate_export_all2(Forms, [{Name,Arity} | Exports]);
+generate_export_all2([_ | Forms], Exports) ->
+  generate_export_all2(Forms, Exports).
+
 full_api_forms (Functions) ->
     Line = 1,
-    Exports = [{attribute, Line, compile, [export_all]}],
     [{attribute, Line, file, {"./selenium_api.erl", 1}},
-     {attribute, Line, module, selenium_api}] 
-	++ Exports ++ Functions.
+     {attribute, Line, module, selenium_api},
+     generate_export_all(Line, Functions)]
+    ++ Functions.
 
 full_session_forms (Functions) ->
     Line = 1,
-    Exports = [{attribute, Line, compile, [export_all]}],
     Stop = stop_session_form (Line),
+    AllFunctions = Functions ++ Stop,
     [{attribute, Line, file, {"./selenium_session.erl", 1}},
-     {attribute, Line, module, {selenium_session, ['Session']}}] 
-	++ Exports ++ Functions ++ Stop.
+     {attribute, Line, module, {selenium_session, ['Session']}},
+     generate_export_all(Line, AllFunctions)]
+    ++ AllFunctions.
 
 function_to_api_form (Function) ->
     Line = 3,
